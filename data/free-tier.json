@@ -1,0 +1,13 @@
+{
+  "_note": "ลิมิตของ Supabase Free plan ที่ตรวจจากเอกสารทางการ — ถ้าเอกสารเปลี่ยน ให้แก้ไฟล์นี้ที่เดียว (tools/usage-check.mjs และ docs/runbook.md อ้างจากที่นี่)",
+  "source": "https://supabase.com/docs/guides/platform/billing-on-supabase",
+  "pause_source": "https://supabase.com/docs/guides/deployment/going-into-prod",
+  "backup_source": "https://supabase.com/docs/guides/platform/backups",
+  "checked": "2026-10-26",
+  "db_mb": 500,
+  "mau": 50000,
+  "storage_gb": 1,
+  "egress_gb": 5,
+  "pause_days": 7,
+  "pause_note": "Supabase อาจ pause โปรเจกต์ Free ที่มี low activity ใน 7 วัน"
+}
