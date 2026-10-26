@@ -12,7 +12,7 @@
 - `line_events(id text pk, received_at timestamptz default now())` — เก็บ `webhookEventId` ที่รับแล้ว · RLS ปิดทั้งหมด
 - `record_line_event(p_id text) returns boolean` — service_role เท่านั้น · ใหม่ → true · ซ้ำ → false
 - `confirm_preorder(p_code text) returns jsonb` — service_role เท่านั้น · `placed` → `confirmed` คืน `{"code","status":"confirmed"}` · ไม่พบ → `not_found` · สถานะอื่น (cancelled/expired/…) → `bad_status` · ยืนยันซ้ำที่ confirmed แล้ว → `{"already":true}`
-- `morning_summary_data(p_day date default (now() at time zone 'Asia/Bangkok')::date) returns jsonb` — service_role เท่านั้น · `{"day":"YYYY-MM-DD","orders":n,"cups":n,"first_pickup":"HH:MM","last_pickup":"HH:MM","low_stock":[{"name","stock","unit","reorder_level"}]}` · นับออเดอร์ `placed`/`confirmed` ที่เวลารับอยู่ในวันนั้น (เวลาไทย) · `cups` = ผลรวม qty × cups ของรายการ · `low_stock` = วัตถุดิบที่ `stock <= reorder_level`
+- `morning_summary_data(p_day date default (now() at time zone 'Asia/Bangkok')::date) returns jsonb` — service_role เท่านั้น · `{"day":"YYYY-MM-DD","orders":n,"cups":n,"first_pickup":"HH:MM","last_pickup":"HH:MM","low_stock":[{"name","stock","unit","reorder_level"}]}` · นับออเดอร์ `placed`/`confirmed` ที่เวลารับอยู่ในวันนั้น (เวลาไทย) · `cups` = ผลรวมคอลัมน์ `order_items.cups` (ซึ่งเป็นจำนวนแก้วของทั้งรายการอยู่แล้ว = cup_units × qty ตามบท 10 ห้ามคูณ qty ซ้ำ) · `low_stock` = วัตถุดิบที่ `stock <= reorder_level`
 
 ## ฟังก์ชัน `morning_summary` (`supabase/functions/morning_summary/handler.ts` + `index.ts` รูปแบบเดียวกับบท 13/15)
 `POST` → `morning_summary_data` → ส่ง push หา `LINE_OWNER_USER_ID` เป็นภาษาไทย: วันที่, จำนวนออเดอร์และแก้ว, ช่วงเวลารับ, รายการวัตถุดิบใกล้หมด (ชื่อ + เหลือเท่าไร) — วัตถุดิบที่ยังพอไม่ต้องขึ้น

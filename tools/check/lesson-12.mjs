@@ -84,7 +84,7 @@ export const checks = [
     },
   },
   {
-    part: 'win', name: 'มี test SQL เรื่องสต็อก/สั่งซื้อใน supabase/tests/ และ npm run test:db ผ่าน',
+    part: 'break', name: 'มี test SQL เรื่องสต็อก/สั่งซื้อใน supabase/tests/ และ npm run test:db ผ่าน',
     run: () => {
       const files = exists('supabase/tests') ? readdirSync('supabase/tests').filter((f) => f.endsWith('.sql')) : []
       if (!files.some((f) => /create_order/.test(read('supabase/tests/' + f)))) return { ok: false, hint: 'ยังไม่มี test SQL ที่เรียก create_order' }
