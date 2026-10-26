@@ -29,4 +29,8 @@ out.push(') as v(menu, ingredient, amount)');
 out.push('join public.menu_items m on m.name = v.menu');
 out.push('join public.ingredients g on g.name = v.ingredient;', '');
 
+out.push('-- โควตาแก้ว: เบเกอรี่ = 0, ดริปกาแฟ เอธิโอเปีย = 2 (กฎใน briefs/preorder-build.md) · seed รันหลัง migration จึงตั้งตรงนี้อีกครั้ง');
+out.push('update public.menu_items set cup_units = 0 where not is_drink;');
+out.push("update public.menu_items set cup_units = 2 where name = 'ดริปกาแฟ เอธิโอเปีย';", '');
+
 writeFileSync(new URL('../../supabase/seed.sql', import.meta.url), out.join('\n'));

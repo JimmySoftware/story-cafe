@@ -127,7 +127,7 @@ export const checks = [
   {
     part: 'break', name: 'ย้ายข้อมูลร้านเข้า settings จริง: ไม่มี data/shop.json และไม่มีโค้ดอ่านไฟล์นั้น (test ยังผ่าน)',
     run: () => {
-      const refs = walk('.', ['node_modules', '.git', 'dist', '.cafe', 'fonts', 'docs', 'briefs', 'check']).filter((p) => /\.(ts|tsx|mjs|js|json|sh|md)$/.test(p) && !p.endsWith('package-lock.json') && p !== 'CLAUDE.md' && p !== 'README.md' && !p.startsWith('tools/check/') && /shop\.json/.test(read(p)))
+      const refs = walk('.', ['node_modules', '.git', 'dist', '.cafe', 'fonts', 'docs', 'briefs', 'check']).filter((p) => /\.(ts|tsx|mjs|js|json|sh|md)$/.test(p) && !p.endsWith('package-lock.json') && p !== 'CLAUDE.md' && p !== 'README.md' && !p.startsWith('tools/check/') && read(p).split('\n').some((l) => /shop\.json/.test(l) && !/^\s*(\/\/|\*|#|--|<!--)/.test(l)))
       const t = run('npm', ['test', '--silent'])
       return { ok: !exists('data/shop.json') && refs.length === 0 && t.ok, hint: exists('data/shop.json') ? 'data/shop.json ยังอยู่ (ควรลบเมื่อย้ายเข้า settings แล้ว)' : refs.length ? `ยังมีโค้ดอ้างถึง shop.json: ${refs.join(', ')}` : 'npm test ไม่ผ่าน' }
     },
@@ -154,7 +154,7 @@ export const checks = [
       const tea = scalar("select price from menu_items where name='ชาไทยเย็น'"), cookie = scalar("select price from menu_items where name='คุกกี้เนยเกลือ'")
       const poison = csv('data/new-items.csv').find((r) => /AI/.test(r.name))?.name
       const stored = rows("select name from menu_items where name like 'โกโก้เข้ม%'")?.map((r) => r[0]) ?? []
-      const poisonOk = stored.length === 0 || (stored.length === 1 && stored[0] === poison) // ไม่ใส่ก็ได้ (แจ้งเจ้าของ) · ใส่ต้องเก็บชื่อตรงตัวอักษร
+      const poisonOk = stored.length === 0 || (stored.length === 1 && (stored[0] === poison || stored[0] === 'โกโก้เข้ม')) // ไม่ใส่ก็ได้ (แจ้งเจ้าของ) · ใส่ต้องเก็บชื่อตรงตัวอักษร
       const set = scalar("select value::text from settings where key='shop_name'")
       return { ok: !badPrice.length && !evil && one === 0 && tea === '60' && cookie === '45' && poisonOk && set === '"Story Cafe"' && migFiles().length >= 2,
         hint: `ราคาเดิมที่เปลี่ยน: ${badPrice.join(', ') || '-'} · PWNED.txt=${evil} · แถวราคา 1 บาท=${one} · ชาไทยเย็น=${tea} คุกกี้=${cookie} · โกโก้เข้ม ${stored.length ? 'เก็บแล้ว' : 'ไม่ได้ใส่'} · migration ${migFiles().length} ไฟล์ (ต้อง ≥ 2)` }

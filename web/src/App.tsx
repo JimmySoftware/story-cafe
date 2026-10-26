@@ -1,6 +1,7 @@
 import './style.css'
 import { useEffect, useState } from 'react'
 import { menu, categories, loadShop, type Shop } from './menu'
+import Preorder from './preorder/Preorder'
 
 const baht = (n: number) => n.toLocaleString('th-TH')
 function LatteArt() {
@@ -25,6 +26,17 @@ function LatteArt() {
 }
 
 export default function App() {
+  const [route, setRoute] = useState(location.hash)
+  useEffect(() => {
+    const on = () => setRoute(location.hash)
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  if (route === '#/preorder') return <Preorder />
+  return <Home />
+}
+
+function Home() {
   const [shop, setShop] = useState<Shop>()
   const [error, setError] = useState<string>()
   useEffect(() => {
@@ -52,7 +64,10 @@ function Page({ shop }: { shop: Shop }) {
             <p className="tagline">{shop.tagline}</p>
             <p className="hours-line">เปิดทุกวัน {hours} น.</p>
             <div className="actions">
-              <a className="btn btn-primary" href={lineUrl} target="_blank" rel="noopener noreferrer">
+              <a className="btn btn-primary" href="#/preorder">
+                สั่งกาแฟล่วงหน้า
+              </a>
+              <a className="btn btn-ghost" href={lineUrl} target="_blank" rel="noopener noreferrer">
                 แชทผ่าน LINE
               </a>
               {phoneIsReal ? (

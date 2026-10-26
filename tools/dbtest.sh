@@ -5,7 +5,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 C=${DB_CONTAINER:-supabase_db_$(sed -n 's/^project_id *= *"\(.*\)"/\1/p' supabase/config.toml)}
-psql() { docker exec -i "$C" psql -U postgres -v ON_ERROR_STOP=1 -q "$@"; }
+# dbhost = IP ของ container (ให้ test ที่ต้องเปิด connection เพิ่มด้วย dblink ใช้ผ่านรหัสผ่านได้ — localhost เป็น trust ซึ่ง dblink ไม่ยอมรับ)
+HOST=$(docker exec "$C" hostname -i | awk '{print $1}')
+psql() { docker exec -i "$C" psql -U postgres -v ON_ERROR_STOP=1 -v dbhost="$HOST" -q "$@"; }
 files=("$@"); [ ${#files[@]} -gt 0 ] || files=(supabase/tests/*.sql)
 [ -e "${files[0]}" ] || { echo "ยังไม่มีไฟล์ test ใน supabase/tests/"; exit 1; }
 pass=0; fail=0

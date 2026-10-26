@@ -344,3 +344,33 @@ h2 {
     transition: background-color 0.15s;
   }
 }
+
+/* หน้าสั่งล่วงหน้า (#/preorder) */
+.po { padding-block: 2rem 3rem; }
+.po h1 { font-size: clamp(2rem, 7vw, 3rem); color: var(--olive-dark); }
+.po h2 { margin-top: 2rem; font-size: 1.5rem; color: var(--olive-dark); }
+.po h3 { margin-top: 1rem; color: var(--wood); }
+.po-menu, .po-lines { display: grid; gap: 0.25rem; }
+.po-menu li { display: flex; align-items: center; gap: 0.75rem; }
+.po-menu li > span:first-child { flex: 1; }
+.po-price { color: var(--ink-soft); }
+.po-small { padding: 0.25rem 0.9rem; min-height: 2.75rem; min-width: 2.75rem; cursor: pointer; }
+.po-lines li { border-bottom: 1px solid var(--cream-deep); padding-block: 0.5rem; }
+.po-line-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.po-line-head strong { flex: 1; }
+.po-qty { display: inline-flex; align-items: center; gap: 0.5rem; }
+.po-opts { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: 0.5rem; }
+.po-opts label, .po-field { display: grid; font-size: 0.95rem; color: var(--ink-soft); }
+.po select, .po input { font: inherit; padding: 0.5rem 0.6rem; min-height: 2.75rem; border: 2px solid var(--olive); border-radius: 0.5rem; background: #fff; color: var(--ink); }
+.po-field { margin-top: 0.75rem; max-width: 24rem; }
+.po-days { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.po button.btn { cursor: pointer; font: inherit; font-weight: 600; }
+.po-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+.po-slot { display: grid; padding: 0.4rem; min-height: 3.25rem; font: inherit; line-height: 1.2; border: 2px solid var(--olive); border-radius: 0.6rem; background: #fff; color: var(--ink); cursor: pointer; }
+.po-slot small { color: var(--ink-soft); }
+.po-slot.on { background: var(--olive); color: var(--cream); }
+.po-slot.on small { color: var(--cream); }
+.po-slot:disabled { border-color: var(--cream-deep); background: var(--cream-deep); color: var(--ink-soft); cursor: not-allowed; text-decoration: line-through; }
+.po-error { margin-top: 1rem; padding: 0.75rem 1rem; border-left: 6px solid #9b2c1c; background: #fbe9e5; color: #6b1d12; }
+.po-done { margin-block: 1.5rem; padding: 1.5rem; border: 2px solid var(--olive); border-radius: 1rem; background: #fff; }
+.po-code { display: block; font-size: 2.5rem; color: var(--olive-dark); letter-spacing: 0.05em; }

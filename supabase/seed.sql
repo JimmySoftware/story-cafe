@@ -64,3 +64,7 @@ select m.id, g.id, v.amount from (values
 ) as v(menu, ingredient, amount)
 join public.menu_items m on m.name = v.menu
 join public.ingredients g on g.name = v.ingredient;
+
+-- โควตาแก้ว: เบเกอรี่ = 0, ดริปกาแฟ เอธิโอเปีย = 2 (กฎใน briefs/preorder-build.md) · seed รันหลัง migration จึงตั้งตรงนี้อีกครั้ง
+update public.menu_items set cup_units = 0 where not is_drink;
+update public.menu_items set cup_units = 2 where name = 'ดริปกาแฟ เอธิโอเปีย';

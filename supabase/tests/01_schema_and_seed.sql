@@ -8,7 +8,7 @@ begin
   assert (select count(*) from public.recipes) = 17, 'recipes ต้อง 17 แถว';
   assert (select count(*) from public.menu_items where sort is null) = 0, 'sort ต้องไม่ว่าง';
   assert (select count(*) from public.recipes r join public.menu_items m on m.id = r.menu_item_id where not m.is_drink) = 0, 'เบเกอรี่ต้องไม่มีสูตร';
-  assert (select count(*) from public.settings where is_public) = 10, 'settings ต้องมี 10 key และ public ทั้งหมด';
+  assert (select count(*) from public.settings where is_public) = 16, 'settings ต้องมี 16 key (10 ข้อมูลร้าน + 6 กฎสั่งล่วงหน้า) และ public ทั้งหมด';
   assert (select count(*) from public.settings where key in ('shop_name','tagline','open_time','close_time','phone','address','line_id','instagram','workshop','products')) = 10, 'key ใน settings ไม่ครบ';
   assert (select value from public.settings where key = 'open_time') = '"07:30"'::jsonb, 'open_time ต้องเป็น 07:30';
   assert (select value from public.settings where key = 'close_time') = '"17:00"'::jsonb, 'close_time ต้องเป็น 17:00';
