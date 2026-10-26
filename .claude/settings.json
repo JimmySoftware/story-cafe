@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Bash(cat *.env*)",
+      "Bash(cat *secrets/*)",
+      "Bash(head *.env*)",
+      "Bash(head *secrets/*)",
+      "Bash(tail *.env*)",
+      "Bash(tail *secrets/*)",
+      "Bash(less *.env*)",
+      "Bash(less *secrets/*)",
+      "Bash(grep *.env*)",
+      "Bash(grep *secrets/*)",
+      "Bash(printenv)",
+      "Bash(printenv *)"
+    ],
+    "ask": [
+      "Bash(git push)",
+      "Bash(git push *)"
+    ]
+  }
+}
