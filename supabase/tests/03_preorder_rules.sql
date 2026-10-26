@@ -199,10 +199,12 @@ begin
   r := public.place_preorder('ลูกค้า anon', '0812223333', b, jsonb_build_array(public._t_item('ลาเต้', 1)));
   assert r ->> 'code' is not null, 'anon ต้องสั่งผ่าน place_preorder ได้';
   assert (select count(*) from public.available_slots((b at time zone 'Asia/Bangkok')::date)) = 57, 'anon เรียก available_slots ได้';
-  assert (select count(*) from public.orders where code = r ->> 'code') = 1, 'anon อ่าน orders ได้ (ชั่วคราว)';
-  assert (select count(*) from public.order_items) = 1, 'anon อ่าน order_items ได้ (ชั่วคราว)';
-  assert (select cups_used from public.pickup_slots where slot_start = b) = 1, 'anon อ่าน pickup_slots ได้';
-
+  ok := false; begin perform 1 from public.orders; exception when insufficient_privilege then ok := true; end;
+  assert ok, 'anon ต้องอ่าน orders ตรง ๆ ไม่ได้ (briefs/rls.md)';
+  ok := false; begin perform 1 from public.order_items; exception when insufficient_privilege then ok := true; end;
+  assert ok, 'anon ต้องอ่าน order_items ตรง ๆ ไม่ได้ (briefs/rls.md)';
+  ok := false; begin perform 1 from public.pickup_slots; exception when insufficient_privilege then ok := true; end;
+  assert ok, 'anon ต้องอ่าน pickup_slots ตรง ๆ ไม่ได้ (briefs/rls.md)';
   ok := false; begin insert into public.orders (code, customer_name, phone, pickup_at, total) values ('SC-9999', 'x', 'x', b, 0); exception when insufficient_privilege then ok := true; end;
   assert ok, 'anon ต้อง insert orders ไม่ได้';
   ok := false; begin update public.orders set total = 0; exception when insufficient_privilege then ok := true; end;
@@ -222,8 +224,7 @@ begin
   ok := false; begin update public.settings set value = '99'::jsonb where key = 'cups_per_slot'; exception when insufficient_privilege then ok := true; end;
   assert ok, 'anon ต้องแก้กฎใน settings ไม่ได้';
 
-  perform public.cancel_preorder(r ->> 'code', '0812223333');
-  assert (select cups_used from public.pickup_slots where slot_start = b) = 0, 'anon ยกเลิกผ่าน cancel_preorder ได้และคืนแก้ว';
+  assert (public.cancel_preorder(r ->> 'code', '0812223333') ->> 'cups_returned')::int = 1, 'anon ยกเลิกผ่าน cancel_preorder ได้และคืนแก้ว';
 end $$;
 set local role anon;
 select public._t_anon_run();

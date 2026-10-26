@@ -21,6 +21,7 @@
 - `npm run quote -- orders/ออฟฟิศสมมติ.json` — อ่านคำขอ คิดราคา สร้าง `out/QT-YYYYMMDD-NNN.pdf` แล้วพิมพ์บรรทัด `ยอดสุทธิ ... บาท → ไฟล์`
 - `npm run menu -- <ไฟล์.xlsx> [ผลลัพธ์.csv]` — อ่านเมนูจาก .xlsx เขียนเป็น CSV (ค่าเริ่มต้น `data/menu.csv` ระวังเขียนทับ)
 - `npm run check -- <เลขบท>` — ตรวจงานของบทนั้นและบอกผ่าน/ตกเป็นภาษาไทย (`--part win|break`, `--json`)
+- `/ship` — ตรวจงานให้พร้อมส่ง 5 ขั้น (สำรวจ → แผน → ลงมือ → พิสูจน์ → commit) แล้ว commit เป็นภาษาไทย ไม่ push (คำสั่งอยู่ที่ `.claude/commands/ship.md`)
 
 ## ฐานข้อมูล
 ข้อมูลร้าน (เมนู ตัวเลือก วัตถุดิบ สูตร และข้อมูลร้านใน `settings`) อยู่ในฐานข้อมูล Supabase ในเครื่องแล้ว (ดู `briefs/database.md`) ไม่มีไฟล์ `shop.json` แล้ว: `npm run quote` และ `web/` อ่านข้อมูลร้านจากตาราง `settings` ผ่าน `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (ต้อง `supabase start` ก่อน) ส่วนราคายังอ่านจาก `data/menu.csv`
