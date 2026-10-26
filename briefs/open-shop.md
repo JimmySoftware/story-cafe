@@ -2,7 +2,7 @@
 > ข้อมูลสมมติเพื่อการเรียน · ชื่อในนี้คือข้อตกลงที่ `npm run check -- 24` อ่านตามเป๊ะ · ที่ต้องตรวจหลังขึ้นระบบจริง (Supabase Cloud, Cloudflare, บัญชีจริง) ทำตาม `docs/runbook.md` ด้วยตัวเอง: `[ตรวจหลังสมัคร]`
 > ไฟล์สำเร็จที่ให้มา: `data/free-tier.json` (ลิมิต Free ที่ตรวจจากเอกสารทางการ วันที่ 26 ต.ค. 2026), `tools/e2e/run.mjs` (รันทั้งระบบ), `templates/recipe-template.md`
 
-## 1) ความปลอดภัย (prompt 1)
+## 1) ความปลอดภัย (prompt 1 = `rls_audit` + แก้ที่เจอ · prompt 3 = `/security-review` + `docs/security-review.md`)
 - ตรวจแบบ `/security-review` ทั้งระบบ (migration, `supabase/functions/`, `pos/`, `owner/`, `web/`) และเขียนผลที่ `docs/security-review.md`: ตารางจุดที่พบ (ไฟล์ · ปัญหา · ระดับสูง/กลาง/ต่ำ · สถานะ `แก้แล้ว` หรือ `ยอมรับเพราะ…`) · บรรทัดแรก `ตรวจโดย: security review` ตามด้วยวันที่ · ต้องมีหัวข้อพูดถึง `RLS`, `service_role`, `.env`/ความลับ
 - **`rls_audit()`** (migration ใหม่ ห้ามแก้เก่า): `public.rls_audit() returns jsonb` = อาร์เรย์ของจุดที่ไม่ปลอดภัย แต่ละจุด `{"table": ชื่อ, "problem": รหัส, "detail": ข้อความไทยสั้น ๆ}` เรียกได้เฉพาะ `service_role` (anon/ลูกค้า/พนักงานเรียกไม่ได้) รหัสปัญหา:
   - `rls_off` — ตารางใน schema `public` ที่ยังไม่เปิด RLS
@@ -19,7 +19,7 @@
 - **`tools/usage-check.mjs`:** อ่านลิมิตจาก `data/free-tier.json` เท่านั้น (ห้ามพิมพ์ตัวเลขซ้ำในโค้ด) · ขนาดฐานข้อมูลจาก `pg_database_size` (ในเครื่อง) หรือ env `CAFE_FAKE_DB_BYTES` (ไว้ทดสอบ) · พิมพ์ `ฐานข้อมูล: X MB จาก 500 MB (Y%)` · < 80% → `ปกติ` exit 0 · ≥ 80% → `ใกล้เต็ม` exit 1 · ≥ 100% → `เต็มแล้ว` exit 1 · ข้อความไทย
 - **`docs/runbook.md`:** (ภาษาไทย สำหรับคนที่ไม่ใช่โปรแกรมเมอร์ตอนตี 6 ร้านเปิดไม่ได้) หัวข้ออย่างน้อย: `Supabase หลับหรือล่ม` (ทำอะไรทีละข้อ: POS ขายต่อ, เว็บใช้ menu-fallback, ตรวจสถานะ, ปลุกโปรเจกต์), `ลิมิตของแผนฟรี` (ตัวเลข 500 MB, 50,000 MAU, 1 GB storage, 5 GB egress, pause 7 วัน อ้างจาก `data/free-tier.json` พร้อมลิงก์ https://supabase.com/docs/guides/platform/billing-on-supabase และ https://supabase.com/docs/guides/deployment/going-into-prod), `สำรองและกู้คืน` (Free ไม่มี backup ให้ดาวน์โหลด ต้องสำรองเอง: ลิงก์ https://supabase.com/docs/guides/platform/backups · ใช้ `tools/backup.sh` / `tools/restore-check.sh` · ความถี่), `ถ้าข้อมูลหลุด` (ตัดกุญแจ เปลี่ยนรหัส) · **ห้ามเดาตัวเลขที่ไม่อยู่ใน FACTS/`free-tier.json`**
 
-## 3) สูตรของคุณเอง (prompt 3, level write)
+## 3) สูตรของคุณเอง (prompt 3, level write; ผลแรก `--part win` = ข้อ 1 ส่วน `rls_audit` เท่านั้น)
 เขียนสูตรหนึ่งใบเกี่ยวกับ "ฟีเจอร์ถัดไปของร้านคุณ" ด้วยแม่แบบ `templates/recipe-template.md` → `mine/recipe.md` + ตัวตรวจเล็ก ๆ `mine/check.mjs` ที่ผ่านเมื่อทำตามสูตรแล้ว
 - frontmatter: `schema: 1`, `id` (ตัวพิมพ์เล็ก ตัวเลข ขีด), `title` (≤ 90), `win`, `win_minutes` (≤ 3), `start`, `check` (ขึ้นต้น `node mine/check.mjs`), `level: write`, `min_claude_code`
 - เนื้อหา: `## prompt 1 · ชนะ` และ `## prompt 2 · ลองพัง` ใส่ prompt ในบล็อก ```text (อย่างน้อย 80 ตัวอักษรต่อบล็อก) · `## รู้ทันสูตร` อย่างน้อย 2 ข้อ · `## ตรวจ` · ห้ามคัดลอกข้อความจากแม่แบบทิ้งไว้ (เช่นข้อความในวงเล็บ) · ห้ามมีความลับ

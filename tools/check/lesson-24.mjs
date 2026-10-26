@@ -69,7 +69,7 @@ export const checks = [
     },
   },
   {
-    part: 'win', name: 'docs/security-review.md: บรรทัดแรก "ตรวจโดย: security review" + วันที่ · มีตารางจุดที่พบ (ระดับ + สถานะ แก้แล้ว/ยอมรับ) · พูดถึง RLS, service_role และ .env · test SQL 15_rls_audit.sql ผ่านใน npm run test:db · ไม่มีความลับจริงในไฟล์ที่ commit และ .env ไม่ถูก track',
+    part: 'extra', name: 'docs/security-review.md: บรรทัดแรก "ตรวจโดย: security review" + วันที่ · มีตารางจุดที่พบ (ระดับ + สถานะ แก้แล้ว/ยอมรับ) · พูดถึง RLS, service_role และ .env · test SQL 15_rls_audit.sql ผ่านใน npm run test:db · ไม่มีความลับจริงในไฟล์ที่ commit และ .env ไม่ถูก track',
     run: () => {
       const t = read('docs/security-review.md'); if (!t) return { ok: false, hint: 'ยังไม่มี docs/security-review.md' }
       const first = /^\s*(?:#+\s*)?ตรวจโดย:\s*security review.*\d{4}/i.test(t.split('\n').find((l) => l.trim()) ?? '')
