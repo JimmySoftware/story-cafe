@@ -1,6 +1,6 @@
 import './style.css'
 import { useEffect, useState } from 'react'
-import { menu, categories, loadShop, type Shop } from './menu'
+import { menu, categories, loadShop, type Shop, type LoadedShop } from './menu'
 import Preorder from './preorder/Preorder'
 import ShopPage from './shop/Shop'
 
@@ -40,14 +40,19 @@ export default function App() {
 }
 
 function Home() {
-  const [shop, setShop] = useState<Shop>()
+  const [shop, setShop] = useState<LoadedShop>()
   const [error, setError] = useState<string>()
   useEffect(() => {
     loadShop().then(setShop, (e) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
   if (error) return <p className="note" role="alert">ผิดพลาด: {error}</p>
   if (!shop) return <p className="note">กำลังโหลดข้อมูลร้าน…</p>
-  return <Page shop={shop} />
+  return (
+    <>
+      {shop.fromFallback && <p className="note" role="status">ตอนนี้ระบบออนไลน์ไม่พร้อม แสดงข้อมูลร้านจากไฟล์สำรอง สั่งล่วงหน้าอาจใช้ไม่ได้ชั่วคราว</p>}
+      <Page shop={shop} />
+    </>
+  )
 }
 
 function Page({ shop }: { shop: Shop }) {

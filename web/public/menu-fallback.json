@@ -1,0 +1,92 @@
+{
+  "menu": [
+    {
+      "category": "กาแฟ",
+      "name": "เอสเปรสโซ",
+      "price": 55,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "อเมริกาโน่",
+      "price": 65,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "ลาเต้",
+      "price": 75,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "คาปูชิโน่",
+      "price": 75,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "ม็อคค่า",
+      "price": 85,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "ดริปกาแฟ เอธิโอเปีย",
+      "price": 95,
+      "is_drink": true
+    },
+    {
+      "category": "กาแฟ",
+      "name": "โคลด์บรูว์",
+      "price": 85,
+      "is_drink": true
+    },
+    {
+      "category": "เครื่องดื่มอื่น ๆ",
+      "name": "มัทฉะลาเต้",
+      "price": 90,
+      "is_drink": true
+    },
+    {
+      "category": "เครื่องดื่มอื่น ๆ",
+      "name": "ชามะนาว",
+      "price": 65,
+      "is_drink": true
+    },
+    {
+      "category": "เบเกอรี่",
+      "name": "ครัวซองต์เนย",
+      "price": 69,
+      "is_drink": false
+    },
+    {
+      "category": "เบเกอรี่",
+      "name": "บราวนี่ช็อกโกแลต",
+      "price": 79,
+      "is_drink": false
+    },
+    {
+      "category": "เบเกอรี่",
+      "name": "ชีสเค้กบาสก์",
+      "price": 120,
+      "is_drink": false
+    }
+  ],
+  "shop": {
+    "shop_name": "Story Cafe",
+    "tagline": "กาแฟดี ๆ หนึ่งแก้ว เรื่องราวดี ๆ หนึ่งวัน",
+    "open_time": "07:30",
+    "close_time": "17:00",
+    "phone": "0X-XXX-XXXX",
+    "address": "ซอยสมมติ 9 กรุงเทพฯ (ที่อยู่สมมติ)",
+    "line_id": "@storycafe-demo",
+    "instagram": "@storycafe.demo",
+    "workshop": {
+      "name": "Workshop latte art",
+      "when": "เสาร์แรกของเดือน 14:00–16:00",
+      "seats": 8,
+      "price": 650
+    }
+  }
+}

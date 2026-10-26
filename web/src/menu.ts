@@ -31,12 +31,35 @@ export function parseShop(rows: Row[]): Shop {
   }
 }
 
-// SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY ถูกฝังตอน build โดย vite.config.ts (เฉพาะสองตัวนี้)
-export async function loadShop(): Promise<Shop> {
+export type LoadedShop = Shop & { fromFallback?: boolean }
+
+async function loadFromSupabase(): Promise<Shop> {
   const url = import.meta.env.SUPABASE_URL
   const key = import.meta.env.SUPABASE_PUBLISHABLE_KEY
   if (!url || !key) throw new Error('ยังไม่ได้ตั้ง SUPABASE_URL และ SUPABASE_PUBLISHABLE_KEY')
-  const res = await fetch(`${url}/rest/v1/settings?select=key,value`, { headers: { apikey: key, Authorization: `Bearer ${key}` } })
+  const res = await fetch(`${url}/rest/v1/settings?select=key,value`, { headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(5000) })
   if (!res.ok) throw new Error(`อ่านข้อมูลร้านไม่ได้ (สถานะ ${res.status})`)
   return parseShop(await res.json())
+}
+
+// ไฟล์สำรอง = tools/menu-fallback.mjs (สร้างจาก seed_settings.sql) ใช้เมื่อ Supabase หลับหรือล่ม
+async function loadFromFallback(): Promise<Shop> {
+  const res = await fetch('/menu-fallback.json')
+  if (!res.ok) throw new Error(`อ่านไฟล์สำรองไม่ได้ (สถานะ ${res.status})`)
+  const { shop } = (await res.json()) as { shop: Record<string, unknown> }
+  return parseShop(Object.entries(shop).map(([key, value]) => ({ key, value })))
+}
+
+// SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY ถูกฝังตอน build โดย vite.config.ts (เฉพาะสองตัวนี้)
+// เมนูกับราคามาจาก data/menu.csv ที่ฝังในเว็บอยู่แล้ว จึงโชว์ได้แม้ Supabase ใช้ไม่ได้
+export async function loadShop(): Promise<LoadedShop> {
+  try {
+    return await loadFromSupabase()
+  } catch (e) {
+    try {
+      return { ...(await loadFromFallback()), fromFallback: true }
+    } catch {
+      throw e
+    }
+  }
 }

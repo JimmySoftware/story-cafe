@@ -32,3 +32,6 @@ pos/src-tauri/gen/
 
 # owner PWA: ผลลัพธ์ที่สร้างใหม่ได้
 owner/dist/
+
+# ไฟล์สำรองข้อมูลร้าน (มีข้อมูลลูกค้า ห้ามเข้า git)
+backups/

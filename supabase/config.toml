@@ -46,6 +46,19 @@ enabled = false
 [edge_runtime]
 enabled = false
 
+# สิทธิ์เรียก Edge Function ตอน deploy (security review): webhook จากข้างนอกไม่มี JWT ของ Supabase จึงปิด verify_jwt
+# และต้องตรวจลายเซ็นในโค้ดเอง (payment_webhook = Stripe-Signature, line_webhook = x-line-signature) · ที่เหลือต้องมี JWT
+[functions.payment_webhook]
+verify_jwt = false
+[functions.line_webhook]
+verify_jwt = false
+[functions.create_payment]
+verify_jwt = true
+[functions.notify_owner]
+verify_jwt = true
+[functions.morning_summary]
+verify_jwt = true
+
 [analytics]
 enabled = false
 
