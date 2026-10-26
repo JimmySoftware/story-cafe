@@ -88,3 +88,26 @@
 - **tag:** เนื้อหาของ `lesson-NN` ไม่เปลี่ยน แต่ไฟล์ตัวตรวจ `tools/check/lesson-10.mjs` / `lesson-16.mjs` ใน `start-10…lesson-16` ถูกอัปเดต (retree) → tag เหล่านี้ย้ายไปคอมมิตใหม่ · ของเดิมเก็บเป็น `rr/<tag>-r2b` (start-10…16, lesson-10…16) และ `rr/main-r2b` · cc ต้อง force-update tag เหล่านี้ที่ origin ถ้า push ไปแล้ว
 - **ผล (5 รันต่อบท, รันทีละ ≤ 5 กล่อง):** บท 10 ผ่าน 5/5 ผลแรก median 53.8 s (max 58.1) · บท 16 ผ่าน 5/5 median 33.1 s (max 39.6) · บท 13 (ฐานสะอาด) ผ่าน 5/5 median 83.6 s (max 108.8) · ทุกรันวัดเวลาได้ครบ · load average ของแต่ละรันอยู่ใน `course/recipes/validation/round2b/logs/*.uptime`
 - **/compact:** ทดสอบใน tmux กับ session ยาว (Messages 66.3k → 25.2k tokens) ยังตอบเรื่องงานก่อนหน้าได้ → เขียนลงการ์ด 06 "ทำเอง"
+
+## รอบ 3 (บท 17–24) · job 1026-223511-344a · 26–27 ต.ค. 2026
+- **ตาม tag:** `start-17…24` / `lesson-17…24` เพิ่มบน `main` (ไม่แตะ tag 00–16, ไม่ push) · ทุก `lesson-NN` ผ่าน `npm run check -- NN` บน fresh clone (`bin/tagcheck.sh`) · Harness: `/scratch/pipeline/cafe-r3/` (logs-old/ = รอบที่ทิ้ง)
+- **ผล (5 รันจริงต่อบท, ผ่าน 5/5 ทุกบท, ≤ 5 กล่องพร้อมกัน):**
+
+| บท | ผลแรก median (max) วินาที | รวม median วินาที | ค่าใช้จ่าย median (API-equivalent) |
+|---|---|---|---|
+| 17 caption ด้วย `claude -p` | 92.6 (113.2) | 241 | $0.91 |
+| 18 โปสเตอร์ PNG + คุมค่าใช้จ่าย | 79.8 (117.5) | 412 | $1.26 |
+| 19 subagent reviewer (ผลแรก = prompt 1+2) | 66.7 (79.5) | 204 | $0.80 |
+| 20 POS Tauri | 30.8 (36.9) | 221 | $0.89 |
+| 21 POS offline | 24.6 (57.3) | 533 | $1.80 |
+| 22 แอปเจ้าของ PWA | 77.4 (87.0) | 596 | $2.40 |
+| 23 channel + green-loop | 76.1 (95.2) | 1173 | $2.68 |
+| 24 เปิดร้านจริง | 39.3 (40.6) | 712 | $2.61 |
+
+- **บท 24 พลาดเกณฑ์ครั้งแรก (median 189.9 s):** prompt 1 รวม `/security-review` + `rls_audit` + เอกสาร → แยก: prompt 1 = `rls_audit` + แก้ที่เจอ (ผลแรก) · prompt 3 = `/security-review` + `docs/security-review.md` + สูตรของฉัน + e2e; ตรวจข้อ `docs/security-review.md` ย้ายจาก `win` ไป `extra`; `start-24` ถูกย้ายไป commit ใหม่ (ยังไม่ push) · รันใหม่ 5 กล่อง median 39.3 s. อีกครั้งหนึ่ง: ตัวตรวจ `.env ถูก track` ตกบน repo จริง เพราะ `.env` ปลอมของบท 3 ถูก track ไว้ตั้งใจ → ตกเฉพาะ `.env` ที่ไม่ใช่ค่าปลอม (แก้ใน start-24)
+- **บท 19:** subagent ที่เพิ่งสร้างไฟล์ต้องเปิด session ใหม่ถึงเรียกได้ (ทดสอบจริง) → ผลแรกนับจาก prompt 1+2 (`win_prompts: 2` ในการ์ด)
+- **บท 20 (Tauri):** เตรียมเครื่องเย็น (cargo fetch ≈ 11 วิ + cargo build ≈ 49 วิ + npm ≈ 30 วิ) อยู่ใน `setup` (`setup_minutes: 3`), ไม่นับในผลแรก · กล่อง harness อุ่นแล้ว 14–51 วิ · หน้าต่างจริงทดสอบภายใต้ Xvfb (`course/recipes/img/20-tauri-window.png`) · Windows/Mac ยังไม่ได้ทดสอบ
+- **บท 22:** PWA ทดสอบ service worker + ออฟไลน์ด้วย Chromium (Playwright); ติดตั้งบนมือถือจริง/iOS ยังไม่ได้ทดสอบ
+- **บท 23:** green-loop แก้จนเขียวใน 2 รอบ ≈ $0.53 ในการรันจริง · agent team ทดสอบใน tmux แล้ว **ไม่สำเร็จ** (ทีมถูกสร้าง แต่ไม่มี teammate ทำงานใน ~6 นาที; ดู `course/FACTS-add-v12-cafe.md`) จึงไม่มีตัวเลขของ team ในบท
+- **บั๊กที่พบใน tag เดิม (ไม่ได้แตะ tag):** `supabase/tests/03_preorder_rules.sql` ช่อง 'เมื่อวาน' กลายเป็นอนาคตช่วง 00:00–10:00 น. ไทย → `npm run test:db` ตกกลางคืน; แก้บน main ใน `start-21` (ใช้เมื่อวานซืน) แต่ tag `lesson-10…20` / `start-10…20` ยังมีบั๊ก · ตัดสินใจโดย cc
+- **ที่ยังต้องทำเอง:** `[ตรวจหลังสมัคร]` (Supabase Cloud จริง, deploy), PWA บนมือถือจริง, agent team ซ้ำ, Windows/Mac สำหรับ Tauri
