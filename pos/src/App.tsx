@@ -3,6 +3,7 @@ import { computeBill, type Bill, type BillInput, type BillLine, type Catalog } f
 import { renderReceipt } from './receipt.ts'
 import { cachedShopName, loadShopName } from './supabase.ts'
 import { queue } from './sync.ts'
+import type { Channel } from './queue.ts'
 
 type Options = NonNullable<BillLine['options']>
 type Kind = 'size' | 'milk' | 'sweetness'
@@ -14,6 +15,7 @@ const parseField = (text: string): number | undefined => (text.trim() === '' ? u
 const thaiMessage = (e: unknown): string => String(e instanceof Error ? e.message : e).replace(/^[a-z_]+: /, '')
 const errorCode = (e: unknown): string => String(e instanceof Error ? e.message : e).split(':')[0]
 
+const CHANNELS: [Channel, string][] = [['store', 'หน้าร้าน'], ['line', 'LINE'], ['web', 'เว็บ'], ['delivery', 'เดลิเวอรี']]
 const CATALOG_CACHE = 'pos_catalog'
 const FLUSH_EVERY_MS = 8000 // เน็ตกลับมาแล้ว flush อัตโนมัติไม่เกิน 10 วินาที (นอกจาก event online)
 
@@ -29,6 +31,7 @@ export function App({ onSignOut }: { onSignOut: () => void }) {
   const [pendingCount, setPendingCount] = useState(() => queue.pending().length)
   const [syncStatus, setSyncStatus] = useState('')
   const [shopName, setShopName] = useState(cachedShopName)
+  const [channel, setChannel] = useState<Channel>('store')
   const [receipt, setReceipt] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -142,7 +145,7 @@ export function App({ onSignOut }: { onSignOut: () => void }) {
     }
     try {
       const computed = computeBill({ ...input, at }, catalog)
-      const saved = queue.enqueue({ ...input, at })
+      const saved = queue.enqueue({ ...input, at, channel })
       setReceipt(renderReceipt(computed, { shop_name: shopName, bill_no: `รอส่ง ${saved.client_order_id.slice(0, 8)}`, at }).join('\n'))
     } catch (e) {
       setSaveError(thaiMessage(e))
@@ -154,6 +157,7 @@ export function App({ onSignOut }: { onSignOut: () => void }) {
     setBalance('')
     setRedeem('')
     setCash('')
+    setChannel('store')
     void flush()
   }
 
@@ -213,6 +217,11 @@ export function App({ onSignOut }: { onSignOut: () => void }) {
           })}
         </ul>
 
+        <div role="group" aria-label="ช่องทางขาย" className="channels">
+          {CHANNELS.map(([c, label]) => (
+            <button key={c} type="button" data-testid={`channel-${c}`} aria-pressed={channel === c} onClick={() => setChannel(c)}>{label}</button>
+          ))}
+        </div>
         <label>แต้มคงเหลือของลูกค้า<input data-testid="balance-input" type="number" inputMode="numeric" min="0" value={balance} onChange={(e) => setBalance(e.target.value)} /></label>
         <label>แต้มที่ขอใช้<input data-testid="redeem-input" type="number" inputMode="numeric" min="0" value={redeem} onChange={(e) => setRedeem(e.target.value)} /></label>
         <label>เงินที่รับ (บาท)<input data-testid="cash-input" type="number" inputMode="numeric" min="0" value={cash} onChange={(e) => setCash(e.target.value)} /></label>

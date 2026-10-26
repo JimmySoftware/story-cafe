@@ -8,6 +8,7 @@ export type Deps = { env: Record<string, string | undefined>; fetch: typeof fetc
 
 const TIMEOUT_MS = 5000
 const MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+const CHANNELS: [string, string][] = [['store', 'หน้าร้าน'], ['line', 'LINE'], ['web', 'เว็บ'], ['delivery', 'เดลิเวอรี']]
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
@@ -17,6 +18,7 @@ type Summary = {
   cups: number
   first_pickup: string | null
   last_pickup: string | null
+  by_channel?: Record<string, number>
   low_stock: { name: string; stock: number; unit: string; reorder_level: number }[]
 }
 
@@ -39,6 +41,8 @@ export function summaryText(s: Summary): string {
   if (s.orders > 0) {
     lines.push(`ออเดอร์วันนี้ ${s.orders} ออเดอร์ รวม ${s.cups} แก้ว`)
     lines.push(`รับตั้งแต่ ${s.first_pickup} ถึง ${s.last_pickup} น.`)
+    const byChannel = CHANNELS.filter(([k]) => (s.by_channel?.[k] ?? 0) > 0).map(([k, label]) => `${label} ${s.by_channel![k]}`)
+    if (byChannel.length > 0) lines.push(`ช่องทาง: ${byChannel.join(' · ')}`)
   } else {
     lines.push('วันนี้ยังไม่มีออเดอร์สั่งล่วงหน้า')
   }

@@ -15,10 +15,10 @@ declare r public.notify_queue;
 begin
   select * into r from public.notify_queue where dedupe_key = 'order_placed:SC-9101';
   assert r.id is not null and r.status = 'pending' and r.kind = 'order_placed', 'ออเดอร์สั่งล่วงหน้าต้องเข้าคิว pending';
-  assert r.payload = '{"code":"SC-9101","total":130,"source":"preorder"}'::jsonb, 'payload สั่งล่วงหน้าไม่ตรง: ' || r.payload::text;
+  assert r.payload = '{"code":"SC-9101","total":130,"source":"preorder","channel":"web"}'::jsonb, 'payload สั่งล่วงหน้าไม่ตรง: ' || r.payload::text;
   assert r.retry_key is not null and r.attempts = 0, 'ต้องมี retry_key และ attempts เริ่มที่ 0';
   select * into r from public.notify_queue where dedupe_key = 'order_placed:SH-9101';
-  assert r.payload = '{"code":"SH-9101","total":380,"source":"shop"}'::jsonb, 'payload ร้านค้าต้องมียอดสุดท้าย: ' || coalesce(r.payload::text, 'null');
+  assert r.payload = '{"code":"SH-9101","total":380,"source":"shop","channel":"web"}'::jsonb, 'payload ร้านค้าต้องมียอดสุดท้าย: ' || coalesce(r.payload::text, 'null');
   insert into public.notify_queue (kind, payload, dedupe_key) values ('order_placed', '{}', 'order_placed:SC-9101') on conflict do nothing;
   assert (select count(*) from public.notify_queue where dedupe_key = 'order_placed:SC-9101') = 1, 'dedupe_key ซ้ำต้องไม่เพิ่มแถว';
 end $$;

@@ -2,7 +2,8 @@
 import type { BillLine } from './bill'
 
 export interface KV { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }
-export type PendingBill = { client_order_id: string; lines: BillLine[]; redeem_points?: number; points_balance?: number; cash_received?: number; at: string; customer_phone?: string }
+export type Channel = 'store' | 'line' | 'web' | 'delivery'
+export type PendingBill = { client_order_id: string; lines: BillLine[]; redeem_points?: number; points_balance?: number; cash_received?: number; at: string; customer_phone?: string; channel?: Channel }
 type DeadBill = { bill: PendingBill; error: string }
 type State = { pending: PendingBill[]; dead: DeadBill[] }
 type FlushResult = { sent: number; failed: number; dead: number; remaining: number }

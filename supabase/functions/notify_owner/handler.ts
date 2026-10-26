@@ -6,10 +6,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type Deps = { env: Record<string, string | undefined>; fetch: typeof fetch; db: SupabaseClient }
 
 const TIMEOUT_MS = 5000
+const CHANNEL_LABEL: Record<string, string> = { store: 'หน้าร้าน', line: 'LINE', web: 'เว็บ', delivery: 'เดลิเวอรี' }
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
-type Row = { id: string; kind: string; payload: { code?: unknown; total?: unknown } | null; retry_key: string }
+type Row = { id: string; kind: string; payload: { code?: unknown; total?: unknown; channel?: unknown } | null; retry_key: string }
 type Outcome = { outcome: 'sent' | 'retry' | 'failed'; error?: string }
 
 export default async function handler(req: Request, deps: Deps): Promise<Response> {
@@ -29,7 +30,8 @@ export default async function handler(req: Request, deps: Deps): Promise<Respons
     const code = row.payload?.code
     const total = row.payload?.total
     if (row.kind !== 'order_placed' || typeof code !== 'string' || !code) return { outcome: 'failed', error: 'bad_payload' }
-    const text = `ออเดอร์ใหม่ ${code} · ยอด ${typeof total === 'number' ? total : '-'} บาท`
+    const channel = typeof row.payload?.channel === 'string' ? CHANNEL_LABEL[row.payload.channel] : undefined
+    const text = `ออเดอร์ใหม่ ${code} · ยอด ${typeof total === 'number' ? total : '-'} บาท${channel ? ` · ช่องทาง ${channel}` : ''}`
     let res: Response
     try {
       res = await deps.fetch(`${base}/v2/bot/message/push`, {

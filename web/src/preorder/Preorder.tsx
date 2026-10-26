@@ -77,7 +77,7 @@ export default function Preorder() {
     setBusy(true)
     const items = lines.map((l) => ({ menu_item_id: l.item.id, qty: l.qty, options: Object.values(l.picked).filter(Boolean) }))
     try {
-      const { data, error: err } = await supabase.rpc('place_preorder', { p_name: name.trim(), p_phone: phone.trim(), p_pickup: pickup, p_items: items })
+      const { data, error: err } = await supabase.rpc('place_preorder', { p_name: name.trim(), p_phone: phone.trim(), p_pickup: pickup, p_items: items, p_channel: 'web' })
       if (err) {
         setError(thaiError(err))
         setReload((n) => n + 1) // ช่องอาจเต็มไปแล้ว โหลดใหม่

@@ -145,3 +145,18 @@ test('enqueue ระหว่าง flush ที่ส่งล้ม: บิล
   assert.deepEqual(await q.flush(), { sent: 0, failed: 1, dead: 0, remaining: 2 })
   assert.deepEqual(ids(q.pending()), [first.client_order_id, late!.client_order_id])
 })
+
+test('ช่องทางขายติดไปกับบิลในคิว และอยู่รอดหลังเปิดคิวใหม่ (เน็ตหลุด)', async () => {
+  const storage = memoryStorage()
+  const newId = counterId()
+  const sent: (string | undefined)[] = []
+  const send = async (b: PendingBill) => { sent.push(b.channel) }
+
+  const q1 = createBillQueue(storage, send, { newId })
+  q1.enqueue({ lines: [line], channel: 'delivery' })
+  q1.enqueue({ lines: [line], channel: 'line' })
+  const q2 = createBillQueue(storage, send, { newId })
+  assert.deepEqual(q2.pending().map((b) => b.channel), ['delivery', 'line'])
+  await q2.flush()
+  assert.deepEqual(sent, ['delivery', 'line'])
+})

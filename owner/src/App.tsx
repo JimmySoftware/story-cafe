@@ -7,11 +7,14 @@ type Summary = Bucket & {
   day: string
   by_hour: (Bucket & { hour: number })[]
   by_source: Record<'pos' | 'preorder' | 'shop', Bucket>
+  by_channel: Record<'store' | 'line' | 'web' | 'delivery', Bucket>
 }
 type LowItem = { name: string; unit: string; stock: number; reorder_level: number }
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ok'; summary: Summary; low: LowItem[] }
 
 const SOURCE_NAME = { pos: 'หน้าร้าน (POS)', preorder: 'สั่งล่วงหน้า', shop: 'ร้านเมล็ดกาแฟออนไลน์' } as const
+
+const CHANNEL_NAME = { store: 'หน้าร้าน', line: 'LINE', web: 'เว็บ', delivery: 'เดลิเวอรี' } as const
 
 // ?day=YYYY-MM-DD ที่ถูกต้องเท่านั้น · ไม่ระบุ = ปล่อยให้ฐานข้อมูลใช้ "วันนี้เวลาไทย" เอง
 function dayFromUrl(): string | undefined {
@@ -155,12 +158,24 @@ function Numbers({ summary, low, isToday }: { summary: Summary; low: LowItem[]; 
       </section>
 
       <section className="card">
-        <h2>แยกตามช่องทาง</h2>
+        <h2>แยกตามที่มาของบิล</h2>
         <ul className="sources">
           {(Object.keys(SOURCE_NAME) as (keyof typeof SOURCE_NAME)[]).map((k) => (
             <li key={k} data-testid={`source-${k}`}>
               <span>{SOURCE_NAME[k]}</span>
               <span>{summary.by_source[k].bills} บิล · {summary.by_source[k].cups} แก้ว · {summary.by_source[k].revenue} บาท</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="card">
+        <h2>แยกตามช่องทางขาย</h2>
+        <ul className="sources">
+          {(Object.keys(CHANNEL_NAME) as (keyof typeof CHANNEL_NAME)[]).map((k) => (
+            <li key={k} data-testid={`channel-total-${k}`}>
+              <span>{CHANNEL_NAME[k]}</span>
+              <span>{summary.by_channel[k].bills} บิล · {summary.by_channel[k].cups} แก้ว · {summary.by_channel[k].revenue} บาท</span>
             </li>
           ))}
         </ul>

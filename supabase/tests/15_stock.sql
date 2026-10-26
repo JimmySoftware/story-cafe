@@ -19,7 +19,11 @@ grant execute on function public.t_stock(text), public.t_hist(text, uuid), publi
 select set_config('test.beans0', (select stock::text from public.ingredients where name = 'เมล็ดกาแฟ Story House Blend'), true),
        set_config('test.cow0', (select stock::text from public.ingredients where name = 'นมวัว'), true),
        set_config('test.oat0', (select stock::text from public.ingredients where name = 'นมโอ๊ต'), true),
-       set_config('test.syrup0', (select stock::text from public.ingredients where name = 'น้ำเชื่อม'), true);
+       set_config('test.syrup0', (select stock::text from public.ingredients where name = 'น้ำเชื่อม'), true),
+       -- ผลรวมประวัติที่มีอยู่ก่อนเริ่ม (ข้อมูลค้างจากการรันอื่นไม่ควรทำให้ test นี้ตก จึงเทียบเฉพาะส่วนต่าง)
+       set_config('test.beans_h0', (select coalesce(sum(h.delta), 0)::text from public.stock_history h join public.ingredients i on i.id = h.ingredient_id where i.name = 'เมล็ดกาแฟ Story House Blend'), true),
+       set_config('test.cow_h0', (select coalesce(sum(h.delta), 0)::text from public.stock_history h join public.ingredients i on i.id = h.ingredient_id where i.name = 'นมวัว'), true),
+       set_config('test.oat_h0', (select coalesce(sum(h.delta), 0)::text from public.stock_history h join public.ingredients i on i.id = h.ingredient_id where i.name = 'นมโอ๊ต'), true);
 do $$ begin assert (select count(*) from public.option_ingredients) >= 3, 'option_ingredients ต้องมีข้อมูลตั้งต้นอย่างน้อย 3 แถว'; end $$;
 
 -- anon / ลูกค้า (แม้ตั้ง user_metadata.role เอง) เรียกฟังก์ชันสต็อกหรืออ่าน/เขียนประวัติไม่ได้
@@ -61,6 +65,9 @@ declare
   v_cow0 numeric := current_setting('test.cow0')::numeric;
   v_oat0 numeric := current_setting('test.oat0')::numeric;
   v_syrup0 numeric := current_setting('test.syrup0')::numeric;
+  v_beans_h0 numeric := current_setting('test.beans_h0')::numeric;
+  v_cow_h0 numeric := current_setting('test.cow_h0')::numeric;
+  v_oat_h0 numeric := current_setting('test.oat_h0')::numeric;
   v_bill uuid;
 begin
   -- พนักงานเขียน stock_history ตรง ๆ ไม่ได้
@@ -109,11 +116,11 @@ begin
 
   -- 6) สอดคล้อง: สต็อกปัจจุบัน = สต็อกตั้งต้น + ผลรวมประวัติ ของทุกวัตถุดิบที่ถูกตัด
   assert public.t_stock('น้ำเชื่อม') = v_syrup0, 'น้ำเชื่อมไม่เกี่ยวข้อง ต้องไม่เปลี่ยน';
-  assert public.t_hist('เมล็ดกาแฟ Story House Blend')
-         = public.t_stock('เมล็ดกาแฟ Story House Blend') - v_beans0, 'เมล็ด: ประวัติไม่ตรงสต็อก ' || public.t_hist('เมล็ดกาแฟ Story House Blend') || ' vs ' || (public.t_stock('เมล็ดกาแฟ Story House Blend') - v_beans0);
-  assert public.t_hist('นมวัว')
+  assert public.t_hist('เมล็ดกาแฟ Story House Blend') - v_beans_h0
+         = public.t_stock('เมล็ดกาแฟ Story House Blend') - v_beans0, 'เมล็ด: ประวัติไม่ตรงสต็อก ' || (public.t_hist('เมล็ดกาแฟ Story House Blend') - v_beans_h0) || ' vs ' || (public.t_stock('เมล็ดกาแฟ Story House Blend') - v_beans0);
+  assert public.t_hist('นมวัว') - v_cow_h0
          = public.t_stock('นมวัว') - v_cow0, 'นมวัว: ประวัติไม่ตรงสต็อก';
-  assert public.t_hist('นมโอ๊ต')
+  assert public.t_hist('นมโอ๊ต') - v_oat_h0
          = public.t_stock('นมโอ๊ต') - v_oat0, 'นมโอ๊ต: ประวัติไม่ตรงสต็อก';
 end $$;
 reset role;

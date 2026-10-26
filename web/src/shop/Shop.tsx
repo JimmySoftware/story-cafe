@@ -126,6 +126,7 @@ function Catalog({ session }: { session: Session | null | undefined }) {
       const { data, error: err } = await supabase.rpc('create_order', {
         p_items: lines.map((p) => ({ sku: p.sku, qty: cart[p.sku] })),
         p_ship: { name: ship.name.trim(), phone: ship.phone.trim(), address: ship.address.trim() },
+        p_channel: 'web',
       })
       if (err) { setError(thaiError(err)); await load() } // สต็อกอาจเปลี่ยนไปแล้ว
       else { setDone(data as { code: string; total: number }); setCart({}); await load() }
