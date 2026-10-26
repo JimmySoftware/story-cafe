@@ -13,7 +13,7 @@ async function mkOrder(u, qty = 1, sku = 'beans-250') {
   if (!r.ok) throw new Error(`สร้างออเดอร์ทดสอบไม่ได้: ${r.text.slice(0, 120)}`)
   return r.body
 }
-const purge = (id) => sql(`delete from payment_slips where order_id in (select id from shop_orders where user_id='${id}'); delete from payments where order_id in (select id from shop_orders where user_id='${id}'); delete from shop_orders where user_id='${id}'`)
+const purge = (id) => { for (const tb of ['payment_slips', 'payments']) sql(`delete from ${tb} where order_id in (select id from shop_orders where user_id='${id}')`); sql(`delete from shop_orders where user_id='${id}'`) } // แต่ละคำสั่งแยก: ตารางอาจยังไม่มี (ก่อนถึงข้อสลิป)
 const snap = () => rows('select sku,stock from products') ?? []
 const restock = (s) => { for (const [sku, st] of s) sql(`update products set stock=${st} where sku='${sku}'`) }
 const status = (code) => scalar(`select status from shop_orders where code='${code}'`)
@@ -22,27 +22,12 @@ const files = (fn) => ['handler.ts', 'index.ts'].filter((f) => exists(`supabase/
 
 export const checks = [
   {
-    part: 'win', name: 'ตาราง payments / stripe_events / payment_slips และฟังก์ชัน mark_order_paid / record_stripe_event / submit_slip / review_slip ตาม brief · mark_order_paid เรียกจากลูกค้า (anon/authenticated) ไม่ได้',
-    run: async () => {
+    part: 'win', name: 'ตาราง payments ตาม brief (migration ใหม่) และ create_payment ใช้ตารางนี้เก็บการจ่าย',
+    run: () => {
       const n = need(); if (n) return n
-      const s0 = snap()
-      const want = { payments: ['id', 'order_id', 'provider_ref', 'amount', 'status'], stripe_events: ['id', 'type'], payment_slips: ['id', 'order_id', 'storage_path', 'status', 'reason'] }
-      const miss = []
-      for (const [t, cols] of Object.entries(want)) {
-        const have = (rows(`select column_name from information_schema.columns where table_schema='public' and table_name='${t}'`) ?? []).map((r) => r[0])
-        const m = cols.filter((c) => !have.includes(c)); if (m.length) miss.push(`${t}: ${have.length ? 'ขาด ' + m.join(', ') : 'ไม่มีตาราง'}`)
-      }
-      const fns = (rows("select proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'") ?? []).map((r) => r[0])
-      for (const f of ['mark_order_paid', 'record_stripe_event', 'submit_slip', 'review_slip']) if (!fns.includes(f)) miss.push(`ไม่มีฟังก์ชัน ${f}`)
-      if (miss.length) return { ok: false, hint: miss.join(' · ') }
-      const u = await newUser('perm')
-      try {
-        const o = await mkOrder(u)
-        const a = await rpc('mark_order_paid', { p_code: o.code, p_ref: 'pi_x', p_amount: 380 })
-        const b = await rpc('mark_order_paid', { p_code: o.code, p_ref: 'pi_x', p_amount: 380 }, u.token)
-        const c = await rpc('record_stripe_event', { p_id: 'evt_x', p_type: 'x' }, u.token)
-        return { ok: !a.ok && !b.ok && !c.ok && status(o.code) === 'pending', hint: `anon เรียก mark_order_paid ได้=${a.ok} · ลูกค้าเรียกได้=${b.ok} · ลูกค้าเรียก record_stripe_event ได้=${c.ok} · สถานะออเดอร์ ${status(o.code)}` }
-      } finally { restock(s0); purge(u.id); await delUser(u.id) }
+      const have = (rows("select column_name from information_schema.columns where table_schema='public' and table_name='payments'") ?? []).map((r) => r[0])
+      const miss = ['id', 'order_id', 'provider_ref', 'amount', 'status'].filter((c) => !have.includes(c))
+      return { ok: have.length > 0 && !miss.length, hint: have.length ? `payments ขาดคอลัมน์ ${miss.join(', ')}` : 'ยังไม่มีตาราง payments' }
     },
   },
   {
@@ -62,7 +47,7 @@ export const checks = [
         const nf = await post(s.url, { order_code: 'SH-0000000' }, { authorization: `Bearer ${u.token}` })
         const calls = fake.log.filter((l) => l.method === 'POST' && l.path === '/v1/payment_intents')
         const f = new URLSearchParams(calls[0]?.body ?? '')
-        const pays = rows(`select provider_ref,amount,status from payments p join shop_orders o on o.id=p.order_id where o.code='${o.code}'`) ?? []
+        const pays = rows(`select p.provider_ref,p.amount,p.status from payments p join shop_orders o on o.id=p.order_id where o.code='${o.code}'`) ?? []
         const ok = r.status === 200 && r.json?.amount_thb === 380 && /^pi_/.test(r.json?.payment_intent_id ?? '') && !!r.json?.client_secret && f.get('amount') === '38000' && f.get('currency') === 'thb' && f.getAll('payment_method_types[]').includes('promptpay')
           && f.get('metadata[order_code]') === o.code && calls[0].auth === `Bearer ${fake.secretKey}` && /order-/.test(calls[0].idempotencyKey ?? '') && r2.status === 200 && r2.json?.payment_intent_id === r.json?.payment_intent_id
           && noJwt.status === 401 && other.status === 404 && nf.status === 404 && other.text === nf.text && pays.length === 1 && pays[0][1] === '380' && pays[0][2] === 'created'
@@ -93,6 +78,30 @@ export const checks = [
     },
   },
   // ---- ลองพัง: webhook ปลอม / ซ้ำ ----
+  {
+    part: 'break', name: 'ตาราง stripe_events และฟังก์ชัน mark_order_paid / record_stripe_event ตาม brief · เรียกจากลูกค้า (anon/authenticated) ไม่ได้',
+    run: async () => {
+      const n = need(); if (n) return n
+      const s0 = snap()
+      const want = { stripe_events: ['id', 'type'] }
+      const miss = []
+      for (const [t, cols] of Object.entries(want)) {
+        const have = (rows(`select column_name from information_schema.columns where table_schema='public' and table_name='${t}'`) ?? []).map((r) => r[0])
+        const m = cols.filter((c) => !have.includes(c)); if (m.length) miss.push(`${t}: ${have.length ? 'ขาด ' + m.join(', ') : 'ไม่มีตาราง'}`)
+      }
+      const fns = (rows("select proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'") ?? []).map((r) => r[0])
+      for (const f of ['mark_order_paid', 'record_stripe_event']) if (!fns.includes(f)) miss.push(`ไม่มีฟังก์ชัน ${f}`)
+      if (miss.length) return { ok: false, hint: miss.join(' · ') }
+      const u = await newUser('perm')
+      try {
+        const o = await mkOrder(u)
+        const a = await rpc('mark_order_paid', { p_code: o.code, p_ref: 'pi_x', p_amount: 380 })
+        const b = await rpc('mark_order_paid', { p_code: o.code, p_ref: 'pi_x', p_amount: 380 }, u.token)
+        const c = await rpc('record_stripe_event', { p_id: 'evt_x', p_type: 'x' }, u.token)
+        return { ok: !a.ok && !b.ok && !c.ok && status(o.code) === 'pending', hint: `anon เรียก mark_order_paid ได้=${a.ok} · ลูกค้าเรียกได้=${b.ok} · ลูกค้าเรียก record_stripe_event ได้=${c.ok} · สถานะออเดอร์ ${status(o.code)}` }
+      } finally { restock(s0); purge(u.id); await delUser(u.id) }
+    },
+  },
   {
     part: 'break', name: 'payment_webhook: จ่ายจริง (ลงนามถูก) → ออเดอร์ paid · ลายเซ็นผิด/กุญแจผิด/เก่าเกิน 5 นาที/ไม่มี header/body ขยะ → 400 และออเดอร์ไม่ถูกแตะ',
     run: async () => {

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "check": "node tools/check/index.mjs",
-    "test": "node --import tsx --test \"tools/**/*.test.ts\"",
+    "test": "node --import tsx --test \"tools/**/*.test.ts\" \"supabase/functions/**/*.test.ts\"",
     "menu": "tsx tools/menu/cli.ts",
     "quote": "tsx --env-file-if-exists=.env tools/quote/cli.ts",
     "test:db": "bash tools/dbtest.sh"
