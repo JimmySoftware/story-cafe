@@ -18,3 +18,8 @@ out/
 # ผลลัพธ์ที่สร้างใหม่ได้ของเว็บ (build / wrangler)
 web/dist/
 .wrangler/
+
+# Supabase ในเครื่อง: ไฟล์ชั่วคราวของ CLI/Studio
+supabase/.temp/
+supabase/.branches/
+supabase/snippets/
