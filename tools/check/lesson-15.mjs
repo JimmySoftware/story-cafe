@@ -13,7 +13,7 @@ const snap = () => rows('select sku,stock from products') ?? []
 const restock = (s) => { for (const [sku, st] of s) sql(`update products set stock=${st} where sku='${sku}'`) }
 const q = (code) => rows(`select status,attempts,retry_key,coalesce(last_error,''),next_attempt_at > now() from notify_queue where dedupe_key='order_placed:${code}'`)?.[0]
 const placePre = (phone, hhmm = '15:30') => scalar(`select place_preorder('ทดสอบ','${phone}',${tmr(hhmm)}, jsonb_build_array(jsonb_build_object('menu_item_id',(select id from menu_items where name='ลาเต้'),'qty',1,'options','[]'::jsonb)))::jsonb->>'code'`)
-const purgeAll = () => { sql("delete from notify_queue where dedupe_key like 'order_placed:%' and (payload->>'code' in (select code from orders where phone like '09000000%') or payload->>'code' in (select code from shop_orders where ship_phone like '09000000%'))"); sql("delete from orders where phone like '09000000%'") }
+const purgeAll = () => { sql("delete from notify_queue where dedupe_key like 'order_placed:%' and (payload->>'code' in (select code from orders where phone like '09000000%') or payload->>'code' in (select code from shop_orders where ship_phone like '09000000%'))"); sql("delete from orders where phone like '09000000%'"); sql('delete from pickup_slots where slot_start not in (select pickup_at from orders)') }
 const mkEnv = (fake, o = {}) => ({ LINE_API_BASE: fake.url, LINE_CHANNEL_ACCESS_TOKEN: fake.token, LINE_OWNER_USER_ID: OWNER, ...o })
 const pushes = (fake) => fake.log.filter((l) => l.path === '/v2/bot/message/push')
 
