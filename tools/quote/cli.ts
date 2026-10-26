@@ -21,7 +21,7 @@ async function main() {
   const used = readdirSync('out').filter((f) => f.startsWith(prefix) && f.endsWith('.pdf')).length
   const number = prefix + String(used + 1).padStart(3, '0')
   const pdf = `out/${number}.pdf`
-  await writeQuotePdf(pdf, number, loadShop(), order, quote)
+  await writeQuotePdf(pdf, number, await loadShop(), order, quote)
   console.log(`ยอดสุทธิ ${quote.total.toLocaleString('en-US')} บาท → ${pdf}`)
 }
 

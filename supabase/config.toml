@@ -20,13 +20,12 @@ enabled = true
 
 [db.seed]
 enabled = true
-sql_paths = ["./seed.sql"]
+sql_paths = ["./seed.sql", "./seed_settings.sql"]
 
 # Studio ต้องเปิดไว้: MCP ของ Supabase ในเครื่องให้บริการผ่าน Studio (http://127.0.0.1:54321/mcp)
 [studio]
 enabled = true
 port = 54323
-
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:5173"

@@ -1,13 +1,8 @@
 import './style.css'
-import { menu, categories, shop } from './menu'
+import { useEffect, useState } from 'react'
+import { menu, categories, loadShop, type Shop } from './menu'
 
 const baht = (n: number) => n.toLocaleString('th-TH')
-const phoneDigits = shop.phone.replace(/[\s-]/g, '')
-const phoneIsReal = /^\d+$/.test(phoneDigits)
-const lineHandle = shop.line.replace(/^@/, '')
-const lineUrl = `https://line.me/R/ti/p/%40${encodeURIComponent(lineHandle)}`
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.name} ${shop.address}`)}`
-
 function LatteArt() {
   return (
     <svg className="cup" viewBox="0 0 240 240" role="img" aria-label="ภาพวาดลายลาเต้อาร์ตมองจากด้านบน">
@@ -30,6 +25,22 @@ function LatteArt() {
 }
 
 export default function App() {
+  const [shop, setShop] = useState<Shop>()
+  const [error, setError] = useState<string>()
+  useEffect(() => {
+    loadShop().then(setShop, (e) => setError(e instanceof Error ? e.message : String(e)))
+  }, [])
+  if (error) return <p className="note" role="alert">ผิดพลาด: {error}</p>
+  if (!shop) return <p className="note">กำลังโหลดข้อมูลร้าน…</p>
+  return <Page shop={shop} />
+}
+
+function Page({ shop }: { shop: Shop }) {
+  const phoneDigits = shop.phone.replace(/[\s-]/g, '')
+  const phoneIsReal = /^\d+$/.test(phoneDigits)
+  const lineHandle = shop.line.replace(/^@/, '')
+  const lineUrl = `https://line.me/R/ti/p/%40${encodeURIComponent(lineHandle)}`
+  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.name} ${shop.address}`)}`
   const hours = shop.open.replace('-', '–')
 
   return (

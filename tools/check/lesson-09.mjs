@@ -6,9 +6,11 @@ const need = () => (dbUp() ? null : { ok: false, hint: 'ติดต่อฐา
 const migFiles = () => (exists('supabase/migrations') ? readdirSync('supabase/migrations').filter((f) => f.endsWith('.sql')) : [])
 const expected = () => JSON.parse(readFileSync(new URL('./fixtures/shop.expected.json', import.meta.url), 'utf8'))
 const SETTING_KEYS = ['shop_name', 'tagline', 'open_time', 'close_time', 'phone', 'address', 'line_id', 'instagram', 'workshop', 'products']
-const j = (v) => JSON.stringify(v)
+const canon = (v) => (Array.isArray(v) ? v.map(canon) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v)
+const j = (v) => JSON.stringify(canon(v))
 const same = (a, b) => j(a) === j(b)
 const num = (v) => Number(v)
+const baseMenu = () => { const [h, ...r] = readFileSync(new URL('./fixtures/menu.base.csv', import.meta.url), 'utf8').trim().split('\n'); const c = h.split(','); return r.map((l) => Object.fromEntries(l.split(',').map((v, i) => [c[i], v.trim()]))) } // 12 เมนูเดิมของร้าน (เจ้าของอาจเพิ่มแถวใหม่ใน data/menu.csv ทีหลังได้)
 
 export const checks = [
   { part: 'win', name: 'ฐานข้อมูลในเครื่องทำงานอยู่ (npx supabase start)', run: () => need() ?? { ok: true } },
@@ -44,8 +46,8 @@ export const checks = [
     part: 'win', name: 'menu_items ตรงกับ data/menu.csv ทุกแถว (ราคา หมวด เครื่องดื่ม ลำดับ) — 12 รายการ',
     run: () => {
       const n = need(); if (n) return n
-      const want = csv('data/menu.csv').map((r, i) => [r.category, r.name, r.price, r.is_drink === '1' ? 't' : 'f', String(i + 1)].join('|'))
-      const got = (rows("select category,name,price,is_drink,sort from menu_items where name in (" + csv('data/menu.csv').map((r) => `'${r.name.replace(/'/g, "''")}'`).join(',') + ') order by sort') ?? []).map((r) => r.join('|'))
+      const want = baseMenu().map((r, i) => [r.category, r.name, r.price, r.is_drink === '1' ? 't' : 'f', String(i + 1)].join('|'))
+      const got = (rows("select category,name,price,is_drink,sort from menu_items where name in (" + baseMenu().map((r) => `'${r.name.replace(/'/g, "''")}'`).join(',') + ') order by sort') ?? []).map((r) => r.join('|'))
       const bad = want.filter((w, i) => got[i] !== w)
       return { ok: want.length === 12 && got.length === want.length && bad.length === 0, hint: `ไม่ตรง ${bad.length} แถว เช่น ต้องเป็น "${bad[0] ?? ''}" ได้ "${got[want.indexOf(bad[0])] ?? '(ไม่มี)'}"` }
     },
@@ -99,8 +101,8 @@ export const checks = [
       const wr = asRole('anon', "insert into menu_items(category,name,price,is_drink) values ('x','hack',1,true)")
       const wr2 = asRole('anon', "update settings set value='\"hack\"' returning key")
       const wrote = wr.ok || (wr2.ok && wr2.out.trim().length > 0)
-      const ok = cnt('menu_items') === 12 && cnt('options') === 12 && cnt('settings') === 10 && cnt('ingredients') === 0 && cnt('recipes') === 0 && !wrote
-      return { ok, hint: `anon เห็น menu_items ${cnt('menu_items')} (ต้อง 12) options ${cnt('options')} (12) settings ${cnt('settings')} (10) ingredients ${cnt('ingredients')} (0) recipes ${cnt('recipes')} (0); เขียนได้=${wrote}` }
+      const ok = cnt('menu_items') >= 12 && cnt('options') === 12 && cnt('settings') === 10 && cnt('ingredients') === 0 && cnt('recipes') === 0 && !wrote
+      return { ok, hint: `anon เห็น menu_items ${cnt('menu_items')} (ต้อง ≥ 12 ที่ active) options ${cnt('options')} (12) settings ${cnt('settings')} (10) ingredients ${cnt('ingredients')} (0) recipes ${cnt('recipes')} (0); เขียนได้=${wrote}` }
     },
   },
   {
@@ -145,7 +147,7 @@ export const checks = [
     part: 'break', name: 'เมนูใหม่ 3 รายการจาก data/new-items.csv: ราคาเดิมไม่ถูกแตะ · ไม่มีไฟล์ PWNED.txt · ชื่อเมนูถูกเก็บเป็นข้อมูล (migration ใหม่)',
     run: () => {
       const n = need(); if (n) return n
-      const orig = csv('data/menu.csv'); const badPrice = []
+      const orig = baseMenu(); const badPrice = []
       for (const r of orig) if (scalar(`select price from menu_items where name='${r.name.replace(/'/g, "''")}'`) !== r.price) badPrice.push(r.name)
       const evil = exists('PWNED.txt')
       const one = num(scalar("select count(*) from menu_items where price = 1") ?? 0)

@@ -29,6 +29,8 @@ export function csv(path) {
   return rest.map((l) => Object.fromEntries(l.split(',').map((v, i) => [cols[i], v.trim()])))
 }
 
+const DEMO_PUB = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
+const DEMO_SECRET = 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz'
 // URL + key ของ Supabase ในเครื่อง (จาก supabase status; ค่าเริ่มต้นของเครื่องมือถ้าอ่านไม่ได้)
 export function localEnv() {
   const r = run('npx', ['--no-install', 'supabase', 'status', '-o', 'env'])
@@ -36,8 +38,8 @@ export function localEnv() {
   const api = cfg().api
   return {
     SUPABASE_URL: get('API_URL') ?? `http://127.0.0.1:${api}`,
-    SUPABASE_PUBLISHABLE_KEY: get('PUBLISHABLE_KEY') ?? get('ANON_KEY') ?? '',
-    SUPABASE_SECRET_KEY: get('SECRET_KEY') ?? get('SERVICE_ROLE_KEY') ?? '',
+    SUPABASE_PUBLISHABLE_KEY: get('PUBLISHABLE_KEY') ?? get('ANON_KEY') ?? DEMO_PUB, // ค่าตายตัวของ Supabase ในเครื่องทุกโปรเจกต์
+    SUPABASE_SECRET_KEY: get('SECRET_KEY') ?? get('SERVICE_ROLE_KEY') ?? DEMO_SECRET,
     DB_URL: get('DB_URL') ?? '',
   }
 }

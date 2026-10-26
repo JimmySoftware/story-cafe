@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { loadCatalog } from './catalog.ts'
+import { loadCatalog, parseShop } from './catalog.ts'
 import { computeQuote } from './pricing.ts'
 import type { Order } from './types.ts'
 
@@ -39,4 +39,23 @@ test('ยอดหลังลดต่ำกว่า 1,500 ส่งแล้�
 
 test('ชื่อรายการที่ไม่มีในเมนูต้องหยุดและบอกชื่อ', () => {
   assert.throws(() => computeQuote(order([{ item: 'ชานมไข่มุก', qty: 3 }]), catalog), /ชานมไข่มุก/)
+})
+
+const sampleSettings = [
+  { key: 'shop_name', value: 'ร้านตัวอย่าง' },
+  { key: 'tagline', value: 'คำโปรยตัวอย่าง' },
+  { key: 'open_time', value: '08:00' },
+  { key: 'close_time', value: '18:00' },
+  { key: 'phone', value: '0X-XXX-XXXX' },
+  { key: 'address', value: 'ที่อยู่ตัวอย่าง' },
+]
+
+test('parseShop: แปลงแถว settings (ข้อมูลตัวอย่าง) เป็นข้อมูลร้าน', () => {
+  assert.deepEqual(parseShop(sampleSettings), {
+    name: 'ร้านตัวอย่าง', tagline: 'คำโปรยตัวอย่าง', open: '08:00-18:00', phone: '0X-XXX-XXXX', address: 'ที่อยู่ตัวอย่าง',
+  })
+})
+
+test('parseShop: ขาด key ต้องบอกชื่อ key เป็นภาษาไทย', () => {
+  assert.throws(() => parseShop(sampleSettings.filter((r) => r.key !== 'phone')), /"phone"/)
 })

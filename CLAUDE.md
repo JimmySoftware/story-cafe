@@ -7,12 +7,13 @@
 ## โครงโฟลเดอร์
 - `menu.html` — เมนูบอร์ดไฟล์เดียว เปิดได้โดยไม่ต้องมีอินเทอร์เน็ตหรือเซิร์ฟเวอร์ (มือถือ 375 px และทีวี 1920×1080)
 - `menu.txt`, `shop.txt` — ข้อความดิบของเมนูและข้อมูลร้าน (แหล่งข้อมูลของเมนูบอร์ด)
-- `data/` — `menu.csv` (ราคาจริงของเครื่องมือ), `shop.json` (ข้อมูลร้าน), ไฟล์ .xlsx เมนูจากร้าน
+- `data/` — `menu.csv` (ราคาจริงของเครื่องมือ) และ CSV อื่นสำหรับ seed, ไฟล์ .xlsx เมนูจากร้าน
 - `briefs/` — brief ของแต่ละงาน: `menu-board`, `quote`, `preorder` และ `shop-rules`
 - `tools/menu/` — แปลง .xlsx เป็น `data/menu.csv` (+ test)
 - `tools/quote/` — คิดราคาและสร้างใบเสนอราคา PDF (`catalog`, `pricing`, `pdf`, `types` + test)
 - `tools/check/` — ตัวตรวจประจำบท (`lesson-NN.mjs`)
 - `orders/` — คำขอใบเสนอราคาแบบ JSON · `out/` — PDF ที่สร้าง (ไม่เข้า git)
+- `supabase/` — ฐานข้อมูลร้าน: `migrations/` (สร้างตาราง), `seed.sql` (สร้างโดย `node tools/db/gen-seed.mjs` จาก `data/*.csv` อย่าแก้มือ), `seed_settings.sql` (ข้อมูลร้านตั้งต้น), `tests/` (test SQL)
 - `docs/` — แผนงานและบันทึก · `fonts/` — Kanit, Sarabun (OFL)
 
 ## คำสั่งที่ใช้บ่อย
@@ -20,6 +21,12 @@
 - `npm run quote -- orders/ออฟฟิศสมมติ.json` — อ่านคำขอ คิดราคา สร้าง `out/QT-YYYYMMDD-NNN.pdf` แล้วพิมพ์บรรทัด `ยอดสุทธิ ... บาท → ไฟล์`
 - `npm run menu -- <ไฟล์.xlsx> [ผลลัพธ์.csv]` — อ่านเมนูจาก .xlsx เขียนเป็น CSV (ค่าเริ่มต้น `data/menu.csv` ระวังเขียนทับ)
 - `npm run check -- <เลขบท>` — ตรวจงานของบทนั้นและบอกผ่าน/ตกเป็นภาษาไทย (`--part win|break`, `--json`)
+
+## ฐานข้อมูล
+ข้อมูลร้าน (เมนู ตัวเลือก วัตถุดิบ สูตร และข้อมูลร้านใน `settings`) อยู่ในฐานข้อมูล Supabase ในเครื่องแล้ว (ดู `briefs/database.md`) ไม่มีไฟล์ `shop.json` แล้ว: `npm run quote` และ `web/` อ่านข้อมูลร้านจากตาราง `settings` ผ่าน `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` (ต้อง `supabase start` ก่อน) ส่วนราคายังอ่านจาก `data/menu.csv`
+- `npx supabase start` / `npx supabase db reset` — เริ่ม / สร้างใหม่จาก migration + seed
+- `npm run test:db` — รัน test SQL ใน `supabase/tests/`
+- แก้โครงตารางผ่านไฟล์ migration เท่านั้น MCP ต่อแบบ read-only
 
 ## กฎของร้าน (จาก briefs/shop-rules.md)
 1. ราคาจริงอยู่ที่ `data/menu.csv` ที่เดียว ห้ามพิมพ์ราคาซ้ำในโค้ดหรือหน้าเว็บที่คำนวณเงิน

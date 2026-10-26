@@ -9,7 +9,7 @@
 และพิมพ์หนึ่งบรรทัดสุดท้ายว่า `ยอดสุทธิ <ตัวเลขมีจุลภาค> บาท → <ไฟล์ PDF>`
 
 ## ของที่มีให้แล้ว (อย่าเขียนซ้ำ)
-- `tools/quote/catalog.ts` อ่านราคาจาก `data/menu.csv` และข้อมูลร้านจาก `data/shop.json`
+- `tools/quote/catalog.ts` อ่านราคาจาก `data/menu.csv` และข้อมูลร้านจากตาราง `settings` (ตัวแปร `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`)
 - `tools/quote/pdf.ts` วาด PDF จากผลที่คำนวณแล้ว · `tools/quote/types.ts` ชนิดข้อมูล
 - `tools/quote/quote.test.ts` คือ test ที่ใช้ตัดสินว่าเสร็จ (ยังรันไม่ผ่านเพราะยังไม่มี `pricing.ts`)
 
