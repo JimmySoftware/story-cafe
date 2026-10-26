@@ -23,3 +23,9 @@ web/dist/
 supabase/.temp/
 supabase/.branches/
 supabase/snippets/
+
+# POS (Tauri): ผลลัพธ์ที่สร้างใหม่ได้
+pos/dist/
+pos/public/catalog.json
+pos/src-tauri/target/
+pos/src-tauri/gen/
