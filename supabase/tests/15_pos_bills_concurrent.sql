@@ -3,6 +3,14 @@
 create extension if not exists dblink with schema public;
 select set_config('test.dbhost', :'dbhost', false);
 
+-- บิลทดสอบตัดสต็อกจริงด้วย (commit แล้ว) จึงคืนสต็อกและลบประวัติของบิลเหล่านี้ก่อนลบบิล
+update public.ingredients g set stock = g.stock - s.d
+  from (select h.ingredient_id, sum(h.delta) as d from public.stock_history h
+          join public.pos_bills b on b.id = h.source_id
+         where h.source = 'pos_bill' and b.customer_phone = 'test-conc' group by 1) s
+ where g.id = s.ingredient_id;
+delete from public.stock_history h using public.pos_bills b
+ where h.source = 'pos_bill' and h.source_id = b.id and b.customer_phone = 'test-conc';
 delete from public.pos_bills where customer_phone = 'test-conc';
 delete from auth.users where email = 'pos-conc@test.local';
 insert into auth.users (id, aud, role, email) values (gen_random_uuid(), 'authenticated', 'authenticated', 'pos-conc@test.local');
@@ -56,6 +64,14 @@ begin
   for i in 1..n_conn loop perform dblink_disconnect('c' || i); end loop;
 end $$;
 
+-- บิลทดสอบตัดสต็อกจริงด้วย (commit แล้ว) จึงคืนสต็อกและลบประวัติของบิลเหล่านี้ก่อนลบบิล
+update public.ingredients g set stock = g.stock - s.d
+  from (select h.ingredient_id, sum(h.delta) as d from public.stock_history h
+          join public.pos_bills b on b.id = h.source_id
+         where h.source = 'pos_bill' and b.customer_phone = 'test-conc' group by 1) s
+ where g.id = s.ingredient_id;
+delete from public.stock_history h using public.pos_bills b
+ where h.source = 'pos_bill' and h.source_id = b.id and b.customer_phone = 'test-conc';
 delete from public.pos_bills where customer_phone = 'test-conc';
 delete from auth.users where email = 'pos-conc@test.local';
 drop extension dblink;

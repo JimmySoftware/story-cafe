@@ -1,4 +1,12 @@
 import { createRoot } from 'react-dom/client'
+import { App } from './App'
+import './style.css'
 
-// เริ่มต้น: แอปเจ้าของร้านยังไม่ได้ทำ (บท 22 ให้ Claude ทำตาม briefs/owner.md)
-createRoot(document.getElementById('root')!).render(<p>แอปเจ้าของร้านยังไม่ได้ทำ</p>)
+createRoot(document.getElementById('root')!).render(<App />)
+
+// ติดตั้งเปลือกแอปไว้ใช้ตอนออฟไลน์ (ตอน dev ไม่ลงทะเบียน กันไฟล์ของ dev server ค้างใน cache)
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
