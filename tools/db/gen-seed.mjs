@@ -33,4 +33,7 @@ out.push('-- โควตาแก้ว: เบเกอรี่ = 0, ดร�
 out.push('update public.menu_items set cup_units = 0 where not is_drink;');
 out.push("update public.menu_items set cup_units = 2 where name = 'ดริปกาแฟ เอธิโอเปีย';", '');
 
+out.push('insert into public.products (sku, name, price, stock, sort) values');
+out.push(csv('products.csv').map((p, i) => `  (${q(p.sku)}, ${q(p.name)}, ${Number(p.price)}, ${Number(p.stock)}, ${i + 1})`).join(',\n') + ';', '');
+
 writeFileSync(new URL('../../supabase/seed.sql', import.meta.url), out.join('\n'));

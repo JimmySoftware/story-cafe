@@ -11,7 +11,7 @@ begin
   assert (select count(*) from public.menu_items) = 13, 'anon ต้องเห็นเฉพาะเมนู active';
   assert (select count(*) from public.options) = 12, 'anon ต้องอ่าน options ได้';
   assert (select count(*) from public.settings where key in ('phone','secret_test')) = 0, 'anon ต้องไม่เห็น settings ที่ไม่ public';
-  assert (select count(*) from public.settings) = 15, 'anon เห็นเฉพาะ settings ที่ public';
+  assert (select count(*) from public.settings) = 14, 'anon เห็นเฉพาะ settings ที่ public';
 
   ok := false;
   begin perform 1 from public.ingredients; exception when insufficient_privilege then ok := true; end;

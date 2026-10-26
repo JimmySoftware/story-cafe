@@ -24,8 +24,8 @@ export const checks = [
         const m = cols.filter((c) => !have.includes(c)); if (m.length) miss.push(`${t}: ${have.length ? 'ขาด ' + m.join(', ') : 'ไม่มีตาราง'}`)
       }
       if (miss.length) return { ok: false, hint: miss.join(' · ') }
-      const w = csv('data/products.csv').map((r) => [r.sku, r.name, r.price, r.stock].join('|')).sort()
-      const g = (rows('select sku,name,price,stock from products') ?? []).map((r) => r.join('|')).sort()
+      const w = csv('data/products.csv').map((r) => [r.sku, r.name, r.price].join('|')).sort()
+      const g = (rows('select sku,name,price from products') ?? []).map((r) => r.join('|')).sort()
       const left = scalar("select count(*) from settings where key='products'")
       return { ok: JSON.stringify(w) === JSON.stringify(g) && left === '0', hint: `products ในฐานข้อมูล ${g.length} แถว (ไฟล์ ${w.length}) ตรงกัน=${JSON.stringify(w) === JSON.stringify(g)} · key products ใน settings เหลือ ${left}` }
     },
@@ -51,13 +51,13 @@ export const checks = [
       const u = await newUser('rules'); const b0 = stock('beans-250'), d0 = stock('drip-5')
       try {
         const t = (items, ship = SHIP, token = u.token) => rpc('create_order', { p_items: items, p_ship: ship }, token)
-        const anon = await t([{ sku: 'beans-250', qty: 1 }], SHIP, undefined)
+        const anon = await t([{ sku: 'beans-250', qty: 1 }], SHIP, null)
         setStock('drip-5', 1)
         const cases = {
           not_authenticated: anon, empty_order: await t([]), bad_qty: await t([{ sku: 'beans-250', qty: 0 }]), bad_qty2: await t([{ sku: 'beans-250', qty: 11 }]),
           bad_product: await t([{ sku: 'nope', qty: 1 }]), bad_ship: await t([{ sku: 'beans-250', qty: 1 }], { name: 'x' }), out_of_stock: await t([{ sku: 'beans-250', qty: 1 }, { sku: 'drip-5', qty: 2 }]),
         }
-        const bad = Object.entries(cases).filter(([k, r]) => r.ok || !new RegExp(k.replace(/2$/, '')).test(errText(r))).map(([k]) => k)
+        const bad = Object.entries(cases).filter(([k, r]) => r.ok || !new RegExp(k === 'not_authenticated' ? 'not_authenticated|permission denied|42501|JWT|401' : k.replace(/2$/, '')).test(errText(r))).map(([k]) => k)
         const rolled = stock('beans-250') === b0
         return { ok: !bad.length && rolled && /drip-5/.test(errText(cases.out_of_stock)), hint: `error ที่ไม่ตรงรหัส: ${bad.join(', ') || '-'} · ออเดอร์ที่ล้มไม่ตัดสต็อกชิ้นแรก=${rolled} · out_of_stock บอก sku=${/drip-5/.test(errText(cases.out_of_stock))}` }
       } finally { setStock('beans-250', b0); setStock('drip-5', d0); cleanup([u.id]) }

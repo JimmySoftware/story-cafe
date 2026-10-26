@@ -12,7 +12,7 @@ export const menu: Item[] = menuCsv
     return { category, name, price: Number(price), isDrink: drink.trim() === '1' }
   })
 
-export type Shop = { name: string; tagline: string; open: string; phone: string; address: string; line: string; instagram: string; products: { name: string; price: number }[]; workshop: { name: string; when: string; seats: number; price: number } }
+export type Shop = { name: string; tagline: string; open: string; phone: string; address: string; line: string; instagram: string; workshop: { name: string; when: string; seats: number; price: number } }
 
 export const categories = [...new Set(menu.map((i) => i.category))]
 
@@ -27,7 +27,7 @@ export function parseShop(rows: Row[]): Shop {
   return {
     name: v('shop_name'), tagline: v('tagline'), open: `${v('open_time')}-${v('close_time')}`,
     phone: v('phone'), address: v('address'), line: v('line_id'), instagram: v('instagram'),
-    products: v('products'), workshop: v('workshop'),
+    workshop: v('workshop'),
   }
 }
 

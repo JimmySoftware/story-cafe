@@ -8,5 +8,4 @@ insert into public.settings (key, value, is_public) values
   ('address', '"ซอยสมมติ 9 กรุงเทพฯ (ที่อยู่สมมติ)"'::jsonb, true),
   ('line_id', '"@storycafe-demo"'::jsonb, true),
   ('instagram', '"@storycafe.demo"'::jsonb, true),
-  ('workshop', '{"name":"Workshop latte art","when":"เสาร์แรกของเดือน 14:00–16:00","seats":8,"price":650}'::jsonb, true),
-  ('products', '[{"name":"เมล็ดคั่วกลาง Story House Blend ถุง 250 g","price":380},{"name":"Drip bag กล่อง 5 ซอง","price":175}]'::jsonb, true);
+  ('workshop', '{"name":"Workshop latte art","when":"เสาร์แรกของเดือน 14:00–16:00","seats":8,"price":650}'::jsonb, true);

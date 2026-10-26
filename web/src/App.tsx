@@ -2,6 +2,7 @@ import './style.css'
 import { useEffect, useState } from 'react'
 import { menu, categories, loadShop, type Shop } from './menu'
 import Preorder from './preorder/Preorder'
+import ShopPage from './shop/Shop'
 
 const baht = (n: number) => n.toLocaleString('th-TH')
 function LatteArt() {
@@ -33,6 +34,8 @@ export default function App() {
     return () => window.removeEventListener('hashchange', on)
   }, [])
   if (route === '#/preorder') return <Preorder />
+  if (route === '#/shop') return <ShopPage view="shop" />
+  if (route === '#/shop/orders') return <ShopPage view="orders" />
   return <Home />
 }
 
@@ -114,15 +117,9 @@ function Page({ shop }: { shop: Shop }) {
         <section className="section tint" aria-labelledby="shop-h">
           <div className="wrap">
             <h2 id="shop-h">ของขายออนไลน์</h2>
-            <ul className="products">
-              {shop.products.map((p) => (
-                <li key={p.name}>
-                  <span className="product-name">{p.name}</span>
-                  <span className="product-price">{baht(p.price)} บาท</span>
-                </li>
-              ))}
-            </ul>
-            <p className="note">สั่งผ่าน LINE {shop.line}</p>
+            <p>เมล็ดกาแฟคั่วและ drip bag สั่งออนไลน์ได้ ต้องสมัครสมาชิกก่อนสั่ง</p>
+            <a className="btn btn-primary" href="#/shop">ไปที่ร้านค้า</a>
+            <p className="note">หรือสอบถามผ่าน LINE {shop.line}</p>
           </div>
         </section>
 
