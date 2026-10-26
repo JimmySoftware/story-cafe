@@ -8,7 +8,11 @@ const BAKERY = 'เบเกอรี่'
 
 export function parsePrice(raw: unknown, rowNo: number): number {
   if (typeof raw === 'number' && Number.isInteger(raw) && raw > 0) return raw
-  if (typeof raw === 'string' && /^\d+$/.test(raw)) return Number(raw)
+  if (typeof raw === 'string') {
+    // รับ: 75 · 65.00 · ฿75.- · 85 บาท (มีช่องว่างหน้าหลังได้) · ไม่รับทศนิยมจริงหรือข้อความอื่น
+    const m = raw.trim().match(/^฿?\s*(\d+)(?:\.0+)?\s*(?:\.-|-|บาท|฿)?$/)
+    if (m && Number(m[1]) > 0) return Number(m[1])
+  }
   throw new Error(`แถว ${rowNo}: ราคา '${String(raw)}' ไม่ใช่ตัวเลข`)
 }
 
@@ -20,7 +24,9 @@ export async function readMenuXlsx(file: string): Promise<MenuRow[]> {
   const rows: MenuRow[] = []
   ws.eachRow({ includeEmpty: true }, (row, rowNo) => {
     if (rowNo === 1) return
-    const category = String(row.getCell(1).value ?? '').trim()
+    const cells = [1, 2, 3].map((i) => String(row.getCell(i).value ?? '').trim())
+    if (cells.every((c) => !c)) return // แถวว่างคั่น
+    const category = cells[0]
     const name = String(row.getCell(2).value ?? '').trim()
     if (!category || !name) throw new Error(`แถว ${rowNo}: ไม่มีหมวดหรือชื่อรายการ`)
     rows.push({ category, name, price: parsePrice(row.getCell(3).value, rowNo), isDrink: category !== BAKERY })
