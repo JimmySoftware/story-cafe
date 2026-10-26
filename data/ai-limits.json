@@ -1,0 +1,5 @@
+{
+  "max_calls_per_day": 5,
+  "max_usd_per_day": 0.5,
+  "max_usd_per_call": 0.15
+}

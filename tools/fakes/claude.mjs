@@ -1,6 +1,6 @@
 // `claude` จำลอง (ไม่มีโมเดล ไม่เรียกเน็ต) ให้ตัวตรวจทดสอบเครื่องมือที่เรียก `claude -p ... --output-format json --json-schema ...`
 // รูปแบบผลลัพธ์เลียนแบบของจริง (Claude Code 2.1.310): JSON เดียวใน stdout มี is_error / result / structured_output / total_cost_usd
-// env: FAKE_CLAUDE_MODE = ok | bad_then_ok | always_bad | wrong_price | login | garbage · FAKE_CLAUDE_LOG = ไฟล์ที่บันทึกทุกครั้งที่ถูกเรียก (1 บรรทัด JSON ต่อครั้ง)
+// env: FAKE_CLAUDE_MODE = ok | bad_then_ok | always_bad | wrong_price | login | garbage · โปสเตอร์: poster_bad | poster_xss | poster_long · FAKE_CLAUDE_COST = ค่าใช้จ่ายต่อครั้งในผล JSON (ค่าเริ่มต้น 0.05) · FAKE_CLAUDE_LOG = ไฟล์ที่บันทึกทุกครั้งที่ถูกเรียก (1 บรรทัด JSON ต่อครั้ง)
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
 
 const args = process.argv.slice(2)
@@ -14,7 +14,7 @@ try { schema = schemaText ? JSON.parse(schemaText) : null } catch { /* schema �
 const calls = log && existsSync(log) ? readFileSync(log, 'utf8').split('\n').filter(Boolean).length : 0
 if (log) appendFileSync(log, `${JSON.stringify({ args, prompt, schemaOk: !!schema, n: calls + 1, cwd: process.cwd() })}\n`)
 
-const out = (body, code = 0) => { process.stdout.write(`${JSON.stringify({ type: 'result', subtype: body.is_error ? 'error' : 'success', num_turns: 2, total_cost_usd: 0.05, ...body })}\n`); process.exit(code) }
+const out = (body, code = 0) => { process.stdout.write(`${JSON.stringify({ type: 'result', subtype: body.is_error ? 'error' : 'success', num_turns: 2, total_cost_usd: Number(process.env.FAKE_CLAUDE_COST ?? 0.05), ...body })}\n`); process.exit(code) }
 if (mode === 'login') out({ is_error: true, result: 'Not logged in · Please run /login' }, 1)
 if (mode === 'garbage') { process.stdout.write('นี่ไม่ใช่ JSON\n'); process.exit(0) }
 
@@ -34,7 +34,12 @@ const posterCopy = { headline: `เมนูใหม่ ${seasonal.season ?? ''
 const want = schema?.properties?.captions ? 'captions' : schema?.properties?.headline ? 'poster' : 'other'
 const n = calls + 1
 let body
-if (want === 'poster') body = posterCopy
+if (want === 'poster') {
+  body = posterCopy
+  if (mode === 'poster_bad') body = { ...posterCopy, items: [{ name: 'เมนูที่ไม่มีในร้าน', blurb: 'ลอง' }, ...posterCopy.items.slice(0, 1)] }
+  if (mode === 'poster_xss') body = { ...posterCopy, headline: '<script>alert(1)</script>เมนูใหม่', items: posterCopy.items.map((x, i) => (i ? x : { ...x, blurb: '<img src=x onerror=alert(2)> อร่อย' })) }
+  if (mode === 'poster_long') body = { ...posterCopy, headline: 'เมนูใหม่หน้าฝนที่อร่อยที่สุดในโลกและต้องมาลองให้ได้ก่อนที่จะหมดฤดู '.repeat(4) }
+}
 else if (mode === 'always_bad') body = bad
 else if (mode === 'bad_then_ok') body = n % 2 === 1 ? bad : good
 else if (mode === 'wrong_price') body = wrongPrice
