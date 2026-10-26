@@ -14,3 +14,7 @@ out/
 
 # ค่าตั้งส่วนตัวของ Claude (ไฟล์กฎทีม .claude/settings.json ยังเข้า git)
 .claude/settings.local.json
+
+# ผลลัพธ์ที่สร้างใหม่ได้ของเว็บ (build / wrangler)
+web/dist/
+.wrangler/
