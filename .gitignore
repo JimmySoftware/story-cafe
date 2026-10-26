@@ -1,1 +1,16 @@
+# ความลับ (เก็บ .env.example ไว้เป็นแบบฟอร์ม)
+.env
+.env.*
+!.env.example
+
+# ไลบรารีที่ติดตั้งใหม่ได้
+node_modules/
+
+# ผลลัพธ์ที่สร้างใหม่ได้
+out/
+
+# โฟลเดอร์ทำงานภายใน
 .cafe/
+
+# ค่าตั้งส่วนตัวของ Claude (ไฟล์กฎทีม .claude/settings.json ยังเข้า git)
+.claude/settings.local.json
