@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เมนู Story Cafe</title>
+<style>
+@font-face{font-family:"Kanit";src:url("fonts/Kanit-Regular.ttf") format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Kanit";src:url("fonts/Kanit-SemiBold.ttf") format("truetype");font-weight:600;font-display:swap}
+:root{
+  --cream:#f6efe0;--paper:#fbf7ec;--olive:#6b7b3a;--olive-d:#4a5728;
+  --wood:#8a5e3b;--wood-l:#c9a67f;--ink:#3b2f22;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:clamp(14px,1.05vw + 8px,26px)}
+body{
+  font-family:"Kanit","Sarabun",sans-serif;font-weight:400;
+  background:var(--cream);color:var(--ink);line-height:1.5;
+  overflow-x:hidden;
+}
+.wrap{max-width:70rem;margin:0 auto;padding:0 1.25rem 2rem}
+header{
+  text-align:center;padding:2.5rem 1rem 2rem;color:var(--paper);
+  background:linear-gradient(160deg,var(--olive-d),var(--olive));
+  position:relative;overflow:hidden;
+}
+header::before,header::after{
+  content:"";position:absolute;border-radius:50%;border:2px solid rgba(251,247,236,.25);
+}
+header::before{width:12rem;height:12rem;left:-4rem;top:-5rem}
+header::after{width:9rem;height:9rem;right:-3rem;bottom:-4rem}
+header svg{width:3rem;height:3rem;margin-bottom:.5rem}
+h1{font-weight:600;font-size:2.6rem;letter-spacing:.04em;line-height:1.2}
+.tag{margin-top:.4rem;font-size:1.1rem;opacity:.95}
+.hours{
+  display:inline-block;margin-top:1rem;padding:.25rem 1rem;
+  border:1px solid rgba(251,247,236,.6);border-radius:2rem;font-size:.95rem;
+}
+.bar{height:.5rem;background:repeating-linear-gradient(90deg,var(--wood) 0 2.5rem,var(--wood-l) 2.5rem 5rem)}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:1.5rem;margin-top:1.75rem}
+section{background:var(--paper);border-radius:1rem;padding:1.25rem 1.4rem;border:1px solid var(--wood-l);min-width:0}
+section.wide{grid-column:1/-1}
+h2{font-weight:600;font-size:1.5rem;color:var(--olive-d);padding-bottom:.4rem;margin-bottom:.5rem;border-bottom:2px solid var(--wood-l)}
+h2 small{font-size:.8rem;font-weight:400;color:var(--wood);margin-left:.4rem}
+ul{list-style:none}
+li{display:flex;align-items:baseline;gap:.6rem;padding:.45rem 0;border-bottom:1px dotted var(--wood-l)}
+li:last-child{border-bottom:0}
+.name{flex:1;min-width:0;overflow-wrap:anywhere}
+.name em{display:block;font-style:normal;font-size:.8rem;color:var(--wood)}
+.price{font-weight:600;color:var(--olive-d);white-space:nowrap}
+.price::after{content:" ฿";font-weight:400;font-size:.8rem;color:var(--wood)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:1rem}
+.opt{background:var(--cream);border-radius:.75rem;padding:.75rem 1rem;min-width:0}
+.opt h3{font-weight:600;font-size:1rem;color:var(--wood);margin-bottom:.25rem}
+.opt li{padding:.2rem 0;border:0}
+.note{margin-top:.75rem;font-size:.85rem;color:var(--wood)}
+footer{text-align:center;margin-top:1.75rem;font-size:.9rem;color:var(--wood)}
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M8 18h26v10a10 10 0 0 1-10 10h-6A10 10 0 0 1 8 28z"/>
+    <path d="M34 21h3a4 4 0 0 1 0 8h-3"/>
+    <path d="M16 6c-2 3 2 4 0 7M24 6c-2 3 2 4 0 7"/>
+  </svg>
+  <h1>Story Cafe</h1>
+  <p class="tag">กาแฟดี ๆ หนึ่งแก้ว เรื่องราวดี ๆ หนึ่งวัน</p>
+  <p class="hours">เปิดทุกวัน 07:30–17:00</p>
+</header>
+<div class="bar"></div>
+
+<div class="wrap">
+<main>
+  <section>
+    <h2>กาแฟ</h2>
+    <ul>
+      <li><span class="name">เอสเปรสโซ</span><span class="price">55</span></li>
+      <li><span class="name">อเมริกาโน่<em>ร้อน / เย็น</em></span><span class="price">65</span></li>
+      <li><span class="name">ลาเต้<em>ร้อน / เย็น / ปั่น</em></span><span class="price">75</span></li>
+      <li><span class="name">คาปูชิโน่</span><span class="price">75</span></li>
+      <li><span class="name">ม็อคค่า</span><span class="price">85</span></li>
+      <li><span class="name">ดริปกาแฟ เอธิโอเปีย<em>ชงสดทีละแก้ว ใช้เวลา 5 นาที</em></span><span class="price">95</span></li>
+      <li><span class="name">โคลด์บรูว์</span><span class="price">85</span></li>
+    </ul>
+  </section>
+
+  <div style="display:grid;gap:1.5rem;align-content:start;min-width:0">
+    <section>
+      <h2>เครื่องดื่มอื่น ๆ</h2>
+      <ul>
+        <li><span class="name">มัทฉะลาเต้</span><span class="price">90</span></li>
+        <li><span class="name">ชามะนาว</span><span class="price">65</span></li>
+      </ul>
+    </section>
+    <section>
+      <h2>เบเกอรี่<small>อบเองทุกเช้า</small></h2>
+      <ul>
+        <li><span class="name">ครัวซองต์เนย</span><span class="price">69</span></li>
+        <li><span class="name">บราวนี่ช็อกโกแลต</span><span class="price">79</span></li>
+        <li><span class="name">ชีสเค้กบาสก์</span><span class="price">120</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="wide">
+    <h2>ตัวเลือกของเครื่องดื่ม<small>ใช้กับกาแฟและเครื่องดื่มอื่น ๆ ไม่ใช้กับเบเกอรี่</small></h2>
+    <div class="opts">
+      <div class="opt"><h3>ไซซ์</h3><ul>
+        <li><span class="name">S</span><span class="price">+0</span></li>
+        <li><span class="name">M</span><span class="price">+10</span></li>
+        <li><span class="name">L</span><span class="price">+20</span></li></ul></div>
+      <div class="opt"><h3>ความหวาน</h3><ul>
+        <li><span class="name">0%</span></li>
+        <li><span class="name">25%</span></li>
+        <li><span class="name">50%</span></li>
+        <li><span class="name">100%</span></li></ul></div>
+      <div class="opt"><h3>นม</h3><ul>
+        <li><span class="name">นมวัว</span><span class="price">+0</span></li>
+        <li><span class="name">โอ๊ต</span><span class="price">+15</span></li>
+        <li><span class="name">อัลมอนด์</span><span class="price">+15</span></li>
+        <li><span class="name">ถั่วเหลือง</span><span class="price">+10</span></li></ul></div>
+      <div class="opt"><h3>เพิ่ม shot เอสเปรสโซ</h3><ul>
+        <li><span class="name">1 shot</span><span class="price">+20</span></li></ul></div>
+    </div>
+  </section>
+</main>
+<footer>Story Cafe · โทร 0X-XXX-XXXX</footer>
+</div>
+</body>
+</html>
