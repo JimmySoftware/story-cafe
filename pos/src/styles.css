@@ -23,3 +23,9 @@ input { display: block; width: 100%; box-sizing: border-box; min-height: 48px; f
 .big { font-size: 1.6rem; }
 .error { color: #b00020; }
 @media (max-width: 900px) { .pos { grid-template-columns: 1fr; } }
+
+.login { max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
+.login label { display: block; margin: 0.75rem 0; }
+.login input { display: block; width: 100%; box-sizing: border-box; }
+.sync { font-size: 0.9rem; }
+.receipt { font-family: ui-monospace, 'Sarabun', monospace; background: #fff; border: 1px dashed #999; padding: 0.75rem; overflow-x: auto; white-space: pre; }

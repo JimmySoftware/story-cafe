@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { computeBill, type Bill, type BillInput, type BillLine, type Catalog } from './bill.ts'
+import { renderReceipt } from './receipt.ts'
+import { cachedShopName, loadShopName } from './supabase.ts'
+import { queue } from './sync.ts'
 
 type Options = NonNullable<BillLine['options']>
 type Kind = 'size' | 'milk' | 'sweetness'
@@ -11,7 +14,10 @@ const parseField = (text: string): number | undefined => (text.trim() === '' ? u
 const thaiMessage = (e: unknown): string => String(e instanceof Error ? e.message : e).replace(/^[a-z_]+: /, '')
 const errorCode = (e: unknown): string => String(e instanceof Error ? e.message : e).split(':')[0]
 
-export function App() {
+const CATALOG_CACHE = 'pos_catalog'
+const FLUSH_EVERY_MS = 8000 // เน็ตกลับมาแล้ว flush อัตโนมัติไม่เกิน 10 วินาที (นอกจาก event online)
+
+export function App({ onSignOut }: { onSignOut: () => void }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [lines, setLines] = useState<BillLine[]>([])
@@ -20,12 +26,52 @@ export function App() {
   const [balance, setBalance] = useState('')
   const [redeem, setRedeem] = useState('')
   const [cash, setCash] = useState('')
+  const [pendingCount, setPendingCount] = useState(() => queue.pending().length)
+  const [syncStatus, setSyncStatus] = useState('')
+  const [shopName, setShopName] = useState(cachedShopName)
+  const [receipt, setReceipt] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // flush คิว (queue ทำให้เรียกซ้อนกันได้ปลอดภัย) แล้วอัปเดตตัวเลข/สถานะบนจอ
+  const flush = useCallback(async () => {
+    if (queue.pending().length === 0) {
+      setSyncStatus(queue.dead().length ? `มีบิลถูกปฏิเสธ ${queue.dead().length} ใบ แจ้งเจ้าของร้าน` : 'ส่งครบแล้ว')
+      return
+    }
+    setSyncStatus('กำลังส่ง…')
+    const r = await queue.flush()
+    setPendingCount(r.remaining)
+    if (r.dead > 0 || queue.dead().length > 0) setSyncStatus(`มีบิลถูกปฏิเสธ ${queue.dead().length} ใบ แจ้งเจ้าของร้าน`)
+    else setSyncStatus(r.failed > 0 ? `ออฟไลน์ — รอส่ง ${r.remaining} บิล` : 'ส่งครบแล้ว')
+  }, [])
+
+  // เน็ตกลับมา (event online) หรือ timer → flush อัตโนมัติ · เปิดแอปใหม่ก็ส่งของค้าง + อ่านชื่อร้านใหม่
+  useEffect(() => {
+    const tick = () => {
+      void flush()
+      void loadShopName().then((n) => n && setShopName(n))
+    }
+    tick()
+    window.addEventListener('online', tick)
+    const timer = setInterval(() => void flush(), FLUSH_EVERY_MS)
+    return () => {
+      window.removeEventListener('online', tick)
+      clearInterval(timer)
+    }
+  }, [flush])
 
   useEffect(() => {
     fetch('/catalog.json')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then(setCatalog)
-      .catch(() => setLoadError('โหลดรายการเมนูไม่ได้ (catalog.json) ให้รัน npm run catalog ในโฟลเดอร์ pos/ แล้วเปิดใหม่'))
+      .then((c: Catalog) => {
+        localStorage.setItem(CATALOG_CACHE, JSON.stringify(c))
+        setCatalog(c)
+      })
+      .catch(() => {
+        const cached = localStorage.getItem(CATALOG_CACHE)
+        if (cached) return setCatalog(JSON.parse(cached) as Catalog)
+        setLoadError('โหลดรายการเมนูไม่ได้ (catalog.json) ให้รัน npm run catalog ในโฟลเดอร์ pos/ แล้วเปิดใหม่')
+      })
   }, [])
 
   // ตัวเลขทุกตัวในหน้าจอมาจาก computeBill เท่านั้น
@@ -84,10 +130,41 @@ export function App() {
   )
   const bill = result.bill
 
+  // บันทึกบิล: คิดด้วย computeBill → ลงคิว (localStorage) ทันที → ใบเสร็จ → ล้างจอ → ส่งเบื้องหลัง (ไม่รอเน็ต)
+  const saveBill = () => {
+    if (!catalog || lines.length === 0 || result.bill === null || result.short) return
+    const at = new Date().toISOString()
+    const input = {
+      lines,
+      ...(parseField(redeem) !== undefined && { redeem_points: parseField(redeem) }),
+      ...(parseField(balance) !== undefined && { points_balance: parseField(balance) }),
+      ...(parseField(cash) !== undefined && { cash_received: parseField(cash) }),
+    }
+    try {
+      const computed = computeBill({ ...input, at }, catalog)
+      const saved = queue.enqueue({ ...input, at })
+      setReceipt(renderReceipt(computed, { shop_name: shopName, bill_no: `รอส่ง ${saved.client_order_id.slice(0, 8)}`, at }).join('\n'))
+    } catch (e) {
+      setSaveError(thaiMessage(e))
+      return
+    }
+    setSaveError(null)
+    setPendingCount(queue.pending().length)
+    setLines([])
+    setBalance('')
+    setRedeem('')
+    setCash('')
+    void flush()
+  }
+
   return (
     <main className="pos">
       <section className="panel">
         <h1>Story Cafe POS</h1>
+        <p className="sync">
+          รอส่ง <strong data-testid="pending-count">{pendingCount}</strong> บิล · <span data-testid="sync-status">{syncStatus}</span>{' '}
+          <button type="button" onClick={onSignOut}>ออกจากระบบ</button>
+        </p>
         <h2>เมนู</h2>
         <div className="grid">
           {catalog.items.map((i) => (
@@ -141,6 +218,7 @@ export function App() {
         <label>เงินที่รับ (บาท)<input data-testid="cash-input" type="number" inputMode="numeric" min="0" value={cash} onChange={(e) => setCash(e.target.value)} /></label>
 
         {result.error && <p role="alert" className="error">{result.error}</p>}
+        {saveError && <p role="alert" className="error">{saveError}</p>}
 
         <dl className="sums">
           <dt>รวม (บาท)</dt><dd data-testid="subtotal">{bill ? bill.subtotal : '–'}</dd>
@@ -152,6 +230,8 @@ export function App() {
           </dd>
           <dt>แต้มที่ได้</dt><dd data-testid="points-earned">{bill ? bill.points_earned : '–'}</dd>
         </dl>
+        <button type="button" className="primary" data-testid="save-bill" disabled={bill === null || result.short} onClick={saveBill}>บันทึกบิล</button>
+        {receipt && <pre data-testid="receipt" className="receipt">{receipt}</pre>}
       </section>
     </main>
   )
