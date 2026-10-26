@@ -1,0 +1,11 @@
+{
+  "name": "story-cafe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ร้านกาแฟสมมติสำหรับคอร์ส Claude Code (ข้อมูลสมมติ)",
+  "type": "module",
+  "scripts": {
+    "check": "node tools/check/index.mjs"
+  },
+  "engines": { "node": ">=22" }
+}

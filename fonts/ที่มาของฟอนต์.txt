@@ -1,0 +1,2 @@
+Kanit-Regular.ttf, Kanit-SemiBold.ttf — Cadson Demak, SIL Open Font License 1.1 (ไฟล์ OFL-Kanit.txt) · ฟอนต์ไทยไม่มีหัว เหมาะกับตัวใหญ่บนโปสเตอร์
+ที่มา: https://github.com/cadsondemak/kanit (Google Fonts)
