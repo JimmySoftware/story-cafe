@@ -1,6 +1,6 @@
 {
   "name": "story-cafe",
-  "version": "0.4.0",
+  "version": "0.9.0",
   "private": true,
   "description": "ร้านกาแฟสมมติสำหรับคอร์ส Claude Code (ข้อมูลสมมติ)",
   "type": "module",
@@ -8,15 +8,19 @@
     "check": "node tools/check/index.mjs",
     "test": "node --import tsx --test \"tools/**/*.test.ts\"",
     "menu": "tsx tools/menu/cli.ts",
-    "quote": "tsx tools/quote/cli.ts"
+    "quote": "tsx tools/quote/cli.ts",
+    "test:db": "bash tools/dbtest.sh"
   },
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "exceljs": "^4.4.0",
     "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "supabase": "2.122.0",
     "tsx": "^4.23.15"
   }
 }

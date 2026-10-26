@@ -1,0 +1,13 @@
+kind,label,price_delta,sort
+size,S,0,1
+size,M,10,2
+size,L,20,3
+sweetness,0%,0,1
+sweetness,25%,0,2
+sweetness,50%,0,3
+sweetness,100%,0,4
+milk,นมวัว,0,1
+milk,โอ๊ต,15,2
+milk,อัลมอนด์,15,3
+milk,ถั่วเหลือง,10,4
+extra,เพิ่ม shot เอสเปรสโซ,20,1
