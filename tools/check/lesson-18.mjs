@@ -80,6 +80,7 @@ export const checks = [
         const p = png(r.out); const s = seasonal(); const html = existsSync(r.html) ? readFileSync(r.html, 'utf8') : ''
         const prices = new Set(s.items.map((i) => i.price))
         const found = [...html.matchAll(/(?:฿\s*(\d[\d,]*)|(\d[\d,]*)\s*(?:บาท|฿))/g)].map((m) => Number((m[1] ?? m[2]).replace(/,/g, '')))
+        for (const m of html.matchAll(/class="[^"]*price[^"]*"[^>]*>([^<]*)</g)) { const v = m[1].match(/\d[\d,]*/); if (v) found.push(Number(v[0].replace(/,/g, ''))) } // รูปแบบราคาอิสระ (98.-, ฿98, 98 บาท) ขอแค่อยู่ใน element ที่ class มีคำว่า price
         const names = s.items.every((i) => html.includes(i.name)), priceOk = s.items.every((i) => found.includes(i.price)) && found.every((v) => prices.has(v))
         const c = r.calls[0]; const a = c?.args ?? []
         const argsOk = a[0] === '-p' && a.includes('--json-schema') && a.includes('--output-format') && a.includes('--max-budget-usd') && Number(a[a.indexOf('--max-budget-usd') + 1]) === limits().max_usd_per_call
