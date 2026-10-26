@@ -78,7 +78,7 @@ export const checks = [
       const tests = walk('supabase/tests').some((f) => /rls_audit/.test(f))
       const files = trackedFiles().filter((f) => !/^(tools\/check|tools\/fakes)\//.test(f) && !/\.test\.(ts|mjs)$/.test(f) && !/fixtures\//.test(f) && !/\.(png|jpg|woff2?|ttf|xlsx|icns|ico|lock)$/.test(f))
       const leaks = files.filter((f) => { try { const c = readFileSync(join(root, f), 'utf8'); return SECRET_RE.some((re) => re.test(c)) } catch { return false } })
-      const envTracked = sh('git', ['ls-files', '.env']).stdout.trim() === '.env'
+      const envTracked = sh('git', ['ls-files', '.env']).stdout.trim() === '.env' && !/ปลอม|FAKE|example\.invalid/.test(read('.env') || '')  // .env ปลอมของบท 3 ถูก track ไว้โดยตั้งใจ
       return { ok: first && table && topics && tests && !leaks.length && !envTracked, hint: `บรรทัดแรก=${first} · ตาราง=${table} · หัวข้อ RLS/service_role/.env=${topics} · มี test SQL=${tests} · ไฟล์ที่มีความลับ=${leaks.join(',') || 'ไม่มี'} · .env ถูก track=${envTracked}` }
     },
   },
