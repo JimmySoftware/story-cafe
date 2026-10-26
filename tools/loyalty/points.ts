@@ -3,7 +3,7 @@ import { isDoublePointsDay } from './promo.ts'
 
 // ซื้อ 25 บาทได้ 1 แต้ม
 export function pointsFor(amountBaht: number, when: Date): number {
-  const base = Math.round(amountBaht / 25)
+  const base = Math.floor(amountBaht / 25)
   return isDoublePointsDay(when) ? base * 2 : base
 }
 
