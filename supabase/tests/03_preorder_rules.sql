@@ -104,8 +104,8 @@ begin
   update public.settings set value = '15'::jsonb where key = 'min_lead_minutes';
   perform public._t_order(b + interval '30 minutes', jsonb_build_array(public._t_item('ลาเต้', 1)));
 
-  -- ช่องที่ผ่านมาแล้ว (เมื่อวาน) → too_late ไม่ว่ากฎจะเป็นเท่าไร
-  assert public._t_slot_err(b - interval '1 day', jsonb_build_array(public._t_item('ลาเต้', 1))) like 'too_late%', 'เวลาที่ผ่านไปแล้วต้อง too_late';
+  -- ช่องที่ผ่านมาแล้ว (เมื่อวานซืน: ไม่ขึ้นกับเวลาของวัน) → too_late ไม่ว่ากฎจะเป็นเท่าไร
+  assert public._t_slot_err(b - interval '2 days', jsonb_build_array(public._t_item('ลาเต้', 1))) like 'too_late%', 'เวลาที่ผ่านไปแล้วต้อง too_late';
 end $$;
 rollback to s; savepoint s;
 
