@@ -36,7 +36,7 @@ export const checks = [
     run: () => {
       const files = [...walk('web', ['node_modules', 'dist', '.wrangler']), ...walk('docs')].filter((p) => /\.(jsonc?|ts|tsx|md|html|toml|env|txt)$/.test(p))
       const bad = files.filter((p) => /CLOUDFLARE_API_TOKEN\s*[=:]\s*["']?[A-Za-z0-9_-]{20,}|service_role|cfut_[A-Za-z0-9]{10,}/.test(read(p)))
-      return { ok: bad.length === 0 && !/token|secret|password|api_key/i.test(read('web/wrangler.jsonc')), hint: `พบข้อความที่ดูเหมือนความลับใน: ${bad.join(', ') || 'web/wrangler.jsonc'}` }
+      return { ok: bad.length === 0 && !/token|secret|password|api_key/i.test(stripJsonc(read('web/wrangler.jsonc')) /* a comment that warns "no API token here" is good practice: judge only keys and values */), hint: `พบข้อความที่ดูเหมือนความลับใน: ${bad.join(', ') || 'web/wrangler.jsonc'}` }
     },
   },
   {
