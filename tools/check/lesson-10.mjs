@@ -14,7 +14,8 @@ const tmr = (hhmm) => day(1, hhmm)
 const item = (name, qty = 1, opts = []) => `jsonb_build_object('menu_item_id',(select id from menu_items where name='${name}'),'qty',${qty},'options',${opts.length ? `jsonb_build_array(${opts.map((o) => `'${o}'`).join(',')})` : "'[]'::jsonb"})`
 const items = (...xs) => `jsonb_build_array(${xs.join(',')})`
 const place = (pickup, its, phone = '0900000001', name = 'ผู้ทดสอบ') => `select place_preorder('${name}','${phone}',${pickup},${its})`
-const tx = (...stmts) => sql(`begin; ${stmts.join('; ')}; rollback`)
+// แต่ละข้อเริ่มจากไม่มีออเดอร์ค้าง (ออเดอร์ "ลองสั่ง" ที่ทิ้งไว้ไม่ทำให้ตก) · ทั้งหมดอยู่ใน transaction ที่ rollback ข้อมูลของผู้เรียนจึงไม่เปลี่ยน
+const tx = (...stmts) => sql(`begin; truncate order_items, orders cascade; update pickup_slots set cups_used = 0; ${stmts.join('; ')}; rollback`)
 const tweak = (key, v) => `update settings set value='${v}'::jsonb where key='${key}'`
 const err = (r, code) => !r.ok && new RegExp(code).test(r.out)
 const LATTE = items(item('ลาเต้'))
