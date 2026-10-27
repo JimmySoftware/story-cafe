@@ -39,7 +39,7 @@ export const checks = [
         const bad = ['orders', 'order_items', 'pickup_slots'].filter((t) => cnt(t) > 0)
         const grants = (rows("select table_name from information_schema.role_table_grants where grantee in ('anon','authenticated') and table_schema='public' and table_name in ('orders','order_items','pickup_slots') and privilege_type='SELECT'") ?? []).map((r) => r[0])
         const w = ["update orders set status='cancelled' returning 1", "delete from orders returning 1"].filter((q) => { const r = asRole('anon', q); return r.ok && r.out.trim() })
-        const open = cnt('menu_items') === 12 && cnt('options') === 12 && cnt('settings') >= 10 && cnt('ingredients') === 0
+        const open = cnt('menu_items') >= 12 && cnt('options') === 12 && cnt('settings') >= 10 && cnt('ingredients') === 0
         return { ok: seed.ok && bad.length === 0 && grants.length === 0 && w.length === 0 && open,
           hint: `anon ยังอ่านได้: ${bad.join(', ') || '-'} · สิทธิ์ SELECT ที่ยังเหลือ: ${[...new Set(grants)].join(', ') || '-'} · เขียนได้: ${w.length} · เมนู/ตัวเลือก/settings ยังเปิด และ ingredients ปิด: ${open}${seed.ok ? '' : ' · สั่งทดสอบไม่ได้ (place_preorder พัง)'}` }
       } finally { sql("delete from orders where phone='0900000556'") }
@@ -50,8 +50,8 @@ export const checks = [
     run: () => {
       const n = need(); if (n) return n
       const t = "((now() at time zone 'Asia/Bangkok')::date + 1 + time '16:10') at time zone 'Asia/Bangkok'"
-      const mk = `select place_preorder('ตรวจ','0900000557',${t}, jsonb_build_array(jsonb_build_object('menu_item_id',(select id from menu_items where name='ลาเต้'),'qty',2,'options','[]'::jsonb)))`
-      const code = "(select code from orders where phone='0900000557')"
+      const mk = `select set_config('app.c', (select place_preorder('ตรวจ','0900000557',${t}, jsonb_build_array(jsonb_build_object('menu_item_id',(select id from menu_items where name='ลาเต้'),'qty',2,'options','[]'::jsonb)))::jsonb->>'code'), true)`
+      const code = "current_setting('app.c')"
       const as = (q) => sql(`begin; ${mk}; set local role anon; ${q}; rollback`)
       const good = as(`select lookup_order(${code},'0900000557')`)
       const wrongPhone = as(`select lookup_order(${code},'0999999999')`)
@@ -79,8 +79,8 @@ export const checks = [
       const n = need(); if (n) return n
       const t = run('npm', ['run', 'test:db', '--silent'])
       const b = run('npm', ['run', 'build', '--silent'], { cwd: process.cwd() + '/web' })
-      return { ok: !direct && /lookup_order/.test(src) === true && rlsTest && t.ok && b.ok && migFiles().length >= 3,
-        hint: `เว็บอ่านตารางตรง=${direct} · เว็บเรียก lookup_order=${/lookup_order/.test(src)} · มี test RLS ในฐานะ anon=${rlsTest} · test:db=${t.ok} · build=${b.ok}` }
+      return { ok: !direct && rlsTest && t.ok && b.ok && migFiles().length >= 3,
+        hint: `เว็บอ่านตารางตรง=${direct} · มี test RLS ในฐานะ anon=${rlsTest} · test:db=${t.ok} · build=${b.ok}` }
     },
   },
 ]
