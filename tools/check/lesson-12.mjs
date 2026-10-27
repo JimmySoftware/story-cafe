@@ -6,6 +6,7 @@ import { readdirSync } from 'node:fs'
 const need = () => (dbUp() ? null : { ok: false, hint: 'ติดต่อฐานข้อมูลในเครื่องไม่ได้ — รัน npx supabase start แล้ว npx supabase db reset' })
 const migFiles = () => (exists('supabase/migrations') ? readdirSync('supabase/migrations').filter((f) => f.endsWith('.sql')) : [])
 const SHIP = { name: 'ผู้ทดสอบ', phone: '0900000012', address: 'ซอยสมมติ 9 (ที่อยู่สมมติ)' }
+const prime = () => { setStock('beans-250', 20); setStock('drip-5', 30) } // ค่าเริ่มต้นตาม data/products.csv (ตัวตรวจไม่พึ่งสต็อกที่เหลือจาก test ของผู้เรียน)
 const stock = (sku) => Number(scalar(`select stock from products where sku='${sku}'`))
 const setStock = (sku, n) => sql(`update products set stock=${n} where sku='${sku}'`)
 const errText = (r) => JSON.stringify(r.body)
@@ -34,7 +35,7 @@ export const checks = [
     part: 'win', name: 'สั่งซื้อ: ล็อกอินแล้ว create_order เมล็ดกาแฟ 2 ถุง = 760 บาท ได้เลข SH-… สต็อกลด 2 · ราคาที่ฝั่งลูกค้าส่งมาไม่มีผล',
     run: async () => {
       const n = need(); if (n) return n
-      const u = await newUser('buy'); const before = stock('beans-250')
+      const u = await newUser('buy'); prime(); const before = stock('beans-250')
       try {
         const r = await rpc('create_order', { p_items: [{ sku: 'beans-250', qty: 2, price: 1 }, { sku: 'drip-5', qty: 1, unit_price: 1 }], p_ship: SHIP }, u.token)
         const after = stock('beans-250')
@@ -48,7 +49,7 @@ export const checks = [
     part: 'win', name: 'กติกา: ไม่ล็อกอิน → not_authenticated · ว่าง/qty ผิด/sku ผิด/ที่อยู่ขาด → error ตามรหัส · ของไม่พอ → out_of_stock และ "ทั้งออเดอร์ล้ม" (สต็อกชิ้นแรกไม่ถูกตัด)',
     run: async () => {
       const n = need(); if (n) return n
-      const u = await newUser('rules'); const b0 = stock('beans-250'), d0 = stock('drip-5')
+      const u = await newUser('rules'); prime(); const b0 = stock('beans-250'), d0 = stock('drip-5')
       try {
         const t = (items, ship = SHIP, token = u.token) => rpc('create_order', { p_items: items, p_ship: ship }, token)
         const anon = await t([{ sku: 'beans-250', qty: 1 }], SHIP, null)
@@ -67,7 +68,7 @@ export const checks = [
     part: 'win', name: 'RLS: ลูกค้า B เห็นออเดอร์ของ A ไม่ได้ · anon อ่านออเดอร์ไม่ได้ · ลูกค้าแก้สต็อก/ราคาตรง ๆ ไม่ได้ · เห็นสินค้า (active) ได้',
     run: async () => {
       const n = need(); if (n) return n
-      const a = await newUser('rlsA'), b = await newUser('rlsB'); const b0 = stock('beans-250')
+      const a = await newUser('rlsA'), b = await newUser('rlsB'); prime(); const b0 = stock('beans-250')
       try {
         await rpc('create_order', { p_items: [{ sku: 'beans-250', qty: 1 }], p_ship: SHIP }, a.token)
         const mine = await api('/rest/v1/shop_orders?select=code', { token: a.token })
@@ -83,7 +84,7 @@ export const checks = [
     },
   },
   {
-    part: 'win', name: 'มี test SQL เรื่องสต็อก/สั่งซื้อใน supabase/tests/ และ npm run test:db ผ่าน',
+    part: 'break', name: 'มี test SQL เรื่องสต็อก/สั่งซื้อใน supabase/tests/ และ npm run test:db ผ่าน',
     run: () => {
       const files = exists('supabase/tests') ? readdirSync('supabase/tests').filter((f) => f.endsWith('.sql')) : []
       if (!files.some((f) => /create_order/.test(read('supabase/tests/' + f)))) return { ok: false, hint: 'ยังไม่มี test SQL ที่เรียก create_order' }
@@ -97,7 +98,7 @@ export const checks = [
     part: 'break', name: 'สั่งพร้อมกัน 8 คนของชิ้นสุดท้าย (สต็อก 1) → สำเร็จคนเดียว · สต็อกเป็น 0 ไม่ติดลบ · ออเดอร์ที่สำเร็จมี 1',
     run: async () => {
       const n = need(); if (n) return n
-      const us = await Promise.all(Array.from({ length: 8 }, (_, i) => newUser('race' + i))); const d0 = stock('drip-5')
+      const us = await Promise.all(Array.from({ length: 8 }, (_, i) => newUser('race' + i))); prime(); const d0 = stock('drip-5')
       try {
         setStock('drip-5', 1)
         const rs = await Promise.all(us.map((u) => rpc('create_order', { p_items: [{ sku: 'drip-5', qty: 1 }], p_ship: SHIP }, u.token)))
