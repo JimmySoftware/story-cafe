@@ -38,6 +38,7 @@ else {
     console.log(`${mark}${r.name}${!r.ok && !r.skip && r.hint ? `\n    → ${r.hint}` : ''}${r.skip ? `\n    → ${r.hint}` : ''}`)
   }
   const bad = results.filter((r) => !r.ok && !r.skip).length
-  console.log(bad === 0 ? '\nผ่านทั้งหมด 🎉' : `\nตก ${bad} ข้อ — ก๊อปข้อความด้านบนไปบอก Claude ว่าให้แก้ข้อที่ตก`)
+  if (results.length > 0 && results.every((r) => r.skip)) console.log(`\nยังไม่ได้ตรวจสักข้อ: ทุกข้อถูกข้าม เพราะโฟลเดอร์นี้อยู่บน tag เฉลย lesson-${nn} ตรง ๆ\nถ้านี่คืองานของคุณเอง ให้รันใหม่ด้วย CAFE_AS_LEARNER=1 npm run check -- ${Number(num)}`)
+  else console.log(bad === 0 ? '\nผ่านทั้งหมด 🎉' : `\nตก ${bad} ข้อ — ก๊อปข้อความด้านบนไปบอก Claude ว่าให้แก้ข้อที่ตก`)
 }
 process.exit(results.some((r) => !r.ok && !r.skip) ? 1 : 0)
