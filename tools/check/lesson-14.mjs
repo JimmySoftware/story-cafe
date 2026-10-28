@@ -30,6 +30,8 @@ const bug = (k, label) => ({
   run: () => { const p = probe(); return { ok: p[k] === true, hint: p.error ? `โค้ดโหลดไม่ได้: ${p.error}` : `ผลที่ได้ ${JSON.stringify(p.details?.[k])}` } },
 })
 
+export const partNames = { break: 'แก้บั๊ก' }
+
 export const checks = [
   {
     part: 'win', name: 'docs/loyalty-summary.md: อธิบายโครงไฟล์ครบ 5 ไฟล์ และเทียบ "README อ้างว่า" กับ "โค้ดทำจริง"',

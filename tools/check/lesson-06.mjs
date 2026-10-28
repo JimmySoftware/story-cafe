@@ -8,6 +8,8 @@ const nonEmpty = () => lines('CLAUDE.md').filter((l) => l.trim()).length
 // ข้อที่ตรวจงานของผู้เรียนเอง: ข้ามเมื่อรันบน tag lesson-06 ตรง ๆ (ดู onTag ใน lib.mjs)
 export const skipOnTag = (c) => c.part === 'break'
 
+export const partNames = { break: 'ใช้ CLAUDE.md เพิ่มเมนู' }
+
 export const checks = [
   { part: 'win', name: 'CLAUDE.md ยาว 30–75 บรรทัด (ไม่สั้นเกิน ไม่ยาวจนอ่านไม่ไหว)', run: () => ({ ok: nonEmpty() >= 30 && nonEmpty() <= 75, hint: `ตอนนี้ ${nonEmpty()} บรรทัด` }) },
   {

@@ -111,7 +111,7 @@ export const checks = [
   },
   // ---- ลองทดสอบหนัก ๆ: webhook ปลอม / ซ้ำ / คนอื่น ----
   {
-    part: 'break', name: 'line_webhook: ลายเซ็นผิด / กุญแจผิด / ไม่มี header / body ขยะ → 401 และออเดอร์ไม่ถูกแตะ · ลายเซ็นถูกจากเจ้าของ "ยืนยัน SC-…" → confirmed + ตอบกลับด้วย reply API · events ว่าง (Verify) → 200',
+    part: 'extra', name: 'line_webhook: ลายเซ็นผิด / กุญแจผิด / ไม่มี header / body ขยะ → 401 และออเดอร์ไม่ถูกแตะ · ลายเซ็นถูกจากเจ้าของ "ยืนยัน SC-…" → confirmed + ตอบกลับด้วย reply API · events ว่าง (Verify) → 200',
     run: async () => {
       const n = need(); if (n) return n
       if (!has('line_webhook')) return { ok: false, hint: 'ต้องมี supabase/functions/line_webhook/handler.ts และ index.ts' }
@@ -134,7 +134,7 @@ export const checks = [
     },
   },
   {
-    part: 'break', name: 'line_webhook: event ซ้ำ (webhookEventId เดิม / redelivery) ไม่ทำซ้ำ ไม่ตอบซ้ำ · คนที่ไม่ใช่เจ้าของพิมพ์ยืนยัน → ออเดอร์ไม่เปลี่ยน · รหัสไม่มี/สถานะผิด → ตอบกลับสุภาพ · reply ล้มเหลวก็ยังตอบ 200',
+    part: 'extra', name: 'line_webhook: event ซ้ำ (webhookEventId เดิม / redelivery) ไม่ทำซ้ำ ไม่ตอบซ้ำ · คนที่ไม่ใช่เจ้าของพิมพ์ยืนยัน → ออเดอร์ไม่เปลี่ยน · รหัสไม่มี/สถานะผิด → ตอบกลับสุภาพ · reply ล้มเหลวก็ยังตอบ 200',
     run: async () => {
       const n = need(); if (n) return n
       if (!has('line_webhook')) return { ok: false, hint: 'ยังไม่มี line_webhook' }
@@ -156,7 +156,7 @@ export const checks = [
     },
   },
   {
-    part: 'break', name: 'ครบวงจรกับ LINE จำลอง: จำลองเจ้าของพิมพ์ "ยืนยัน …" ผ่าน /__webhook ของ fake (ลงนามตามอัลกอริทึม LINE) → confirmed · ลายเซ็นผิดจาก fake → 401',
+    part: 'extra', name: 'ครบวงจรกับ LINE จำลอง: จำลองเจ้าของพิมพ์ "ยืนยัน …" ผ่าน /__webhook ของ fake (ลงนามตามอัลกอริทึม LINE) → confirmed · ลายเซ็นผิดจาก fake → 401',
     run: async () => {
       const n = need(); if (n) return n
       if (!has('line_webhook')) return { ok: false, hint: 'ยังไม่มี line_webhook' }

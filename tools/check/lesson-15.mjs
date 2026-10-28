@@ -128,7 +128,7 @@ export const checks = [
     },
   },
   {
-    part: 'extra', name: 'มี test ของ notify_owner (handler.test.ts) · npm test กับ npm run test:db ผ่าน · ไม่มี token พิมพ์ในโค้ด/.env.example มีแต่ชื่อตัวแปร',
+    part: 'win', name: 'มี test ของ notify_owner (handler.test.ts) · npm test กับ npm run test:db ผ่าน · ไม่มี token พิมพ์ในโค้ด/.env.example มีแต่ชื่อตัวแปร',
     run: () => {
       const tests = walk('supabase/functions/notify_owner').filter((p) => /\.test\.ts$/.test(p))
       const code = walk('supabase/functions').filter((p) => /\.ts$/.test(p) && !/\.test\.ts$/.test(p)).map(read).join('\n')

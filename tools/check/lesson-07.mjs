@@ -6,6 +6,8 @@ const srcFiles = () => walk('web/src').filter((p) => /\.(tsx?|css)$/.test(p) && 
 const srcText = () => srcFiles().map(read).join('\n')
 const mtime = (p) => (exists(p) ? statSync(p).mtimeMs : 0)
 
+export const partNames = { break: 'ตรวจ plugin ก่อนไว้ใจ' }
+
 export const checks = [
   { part: 'win', name: 'หน้าแรกถูกเขียนใหม่แล้ว (web/src/App.tsx ไม่ใช่หน้าชั่วคราว)', run: () => ({ ok: lines('web/src/App.tsx').length >= 25 && !/กำลังสร้างหน้าร้าน/.test(app()), hint: 'App.tsx ยังเป็นหน้าชั่วคราว' }) },
   { part: 'win', name: 'build ผ่านและมี web/dist/index.html (build หลังแก้ไฟล์ล่าสุด)', run: () => { const latest = Math.max(...srcFiles().map(mtime), 0); return { ok: exists('web/dist/index.html') && mtime('web/dist/index.html') >= latest - 1000, hint: 'ยังไม่มี web/dist หรือ build เก่ากว่าไฟล์ที่แก้ — รัน cd web && npm run build' } } },

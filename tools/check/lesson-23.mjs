@@ -34,6 +34,8 @@ const bodyText = (p) => { try { return JSON.parse(p.body).messages?.[0]?.text ??
 const staticHas = (dir, re) => walk(dir).filter((f) => /\.(tsx?|jsx?)$/.test(f) && !/\.test\./.test(f)).some((f) => re.test(read(f)))
 const buildOk = (dir) => { const r = spawnSync('npm', ['run', 'build', '--silent'], { cwd: join(root, dir), encoding: 'utf8', timeout: 170000 }); return { ok: r.status === 0, out: (r.stdout + r.stderr).slice(-250) } }
 
+export const partNames = { break: 'ส่วนที่เหลือ + workflow' }
+
 export const checks = [
   {
     part: 'win', name: 'migration: คอลัมน์ channel (store|line|web|delivery) บน pos_bills (ค่าเริ่มต้น store), orders และ shop_orders (ค่าเริ่มต้น web) · ค่านอกรายการถูกปฏิเสธที่ฐานข้อมูล',

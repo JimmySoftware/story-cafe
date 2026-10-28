@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto'
 
 const testRun = () => run('npm', ['test', '--silent'])
 
+export const partNames = { break: 'ต่อยอด: เมนูจาก Excel' }
+
 export const checks = [
   { part: 'win', name: 'มี tools/quote/pricing.ts และ tools/quote/cli.ts', run: () => ({ ok: exists('tools/quote/pricing.ts') && exists('tools/quote/cli.ts'), hint: 'ยังขาด pricing.ts หรือ cli.ts' }) },
   { part: 'win', name: 'npm test ผ่านทั้งหมด', run: () => { const r = testRun(); return { ok: r.ok, hint: r.out.split('\n').filter((l) => /not ok|fail|Error/i.test(l)).slice(0, 3).join(' | ') || 'npm test ไม่ผ่าน' } } },

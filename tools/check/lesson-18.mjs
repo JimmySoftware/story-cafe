@@ -190,7 +190,7 @@ export const checks = [
     },
   },
   {
-    part: 'extra', name: 'package.json มี npm run poster และ playwright · state (.cafe/) ไม่เข้า git · ไม่มี key/ค่าลับในไฟล์ของเครื่องมือ',
+    part: 'win', name: 'package.json มี npm run poster และ playwright · state (.cafe/) ไม่เข้า git · ไม่มี key/ค่าลับในไฟล์ของเครื่องมือ',
     run: () => {
       const p = JSON.parse(read('package.json')); const gi = read('.gitignore')
       const leaks = walk('tools/poster').filter((f) => /sk-ant-(?!FAKE)[A-Za-z0-9_-]{20,}/.test(read(f)))

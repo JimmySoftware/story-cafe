@@ -6,6 +6,8 @@ const tracked = () => git('ls-files').out.split('\n').filter(Boolean)
 // ข้อที่ตรวจงานของผู้เรียนเอง: ข้ามเมื่อรันบน tag lesson-05 ตรง ๆ (ดู onTag ใน lib.mjs)
 export const skipOnTag = (c) => c.part === 'break' || /^(มี git repo|\.env \(ความลับ\)|ตั้งชื่อผู้ commit)/.test(c.name)
 
+export const partNames = { later: 'หลังสมัคร GitHub' }
+
 export const checks = [
   { part: 'win', name: 'มี git repo (branch main) และ commit อย่างน้อย 1 ครั้ง', run: () => ({ ok: exists('.git') && git('rev-parse', '--abbrev-ref', 'HEAD').out.trim() === 'main' && Number(git('rev-list', '--count', 'HEAD').out.trim() || 0) >= 1, hint: 'ยังไม่มี repo, ไม่ได้ชื่อ branch main หรือยังไม่เคย commit' }) },
   {

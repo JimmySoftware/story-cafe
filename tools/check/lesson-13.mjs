@@ -20,6 +20,8 @@ const status = (code) => scalar(`select status from shop_orders where code='${co
 const evtBody = (id, type, pi, amount, code) => JSON.stringify({ id, object: 'event', type, created: Math.floor(Date.now() / 1000), data: { object: { id: pi, object: 'payment_intent', amount, amount_received: type.endsWith('succeeded') ? amount : 0, currency: 'thb', metadata: { order_code: code } } } })
 const files = (fn) => ['handler.ts', 'index.ts'].filter((f) => exists(`supabase/functions/${fn}/${f}`))
 
+export const partNames = { break: 'webhook และของปลอม', later: 'หลังสมัคร Stripe' }
+
 export const checks = [
   {
     part: 'win', name: 'ตาราง payments ตาม brief (migration ใหม่) และ create_payment ใช้ตารางนี้เก็บการจ่าย',

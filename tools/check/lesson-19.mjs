@@ -33,6 +33,8 @@ const read_ = async (token) => { const r = await api('/rest/v1/staff_notes?selec
 const ins = async (token) => { const r = await api('/rest/v1/staff_notes', { token, body: { customer_phone: '0900000019', note: 'จดโดยตัวตรวจ' } }); return r.status }
 
 
+export const partNames = { break: 'รายงานจับครบและแก้ให้ถูก', extra: 'ตรวจซ้ำด้วย reviewer' }
+
 export const checks = [
   {
     part: 'win', name: 'subagent reviewer ตั้งไว้ถูก: .claude/agents/reviewer.md มี name: reviewer, description ที่บอกว่าใช้เมื่อไหร่ และ tools เฉพาะ Read/Grep/Glob (ไม่มี Edit, Write, Bash)',

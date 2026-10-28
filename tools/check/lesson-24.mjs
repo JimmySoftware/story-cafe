@@ -31,6 +31,8 @@ function trackedFiles() {
   return walk('.', ['node_modules', '.git', 'dist', '.cafe', 'out', 'target', 'backups'])
 }
 
+export const partNames = { break: 'ลองทดสอบหนัก ๆ (แผนสำรอง)' }
+
 export const checks = [
   {
     part: 'win', name: 'rls_audit(): เรียกได้เฉพาะ service_role · เมื่อปลูกจุดรั่วทดลอง 4 แบบ (ตารางไม่เปิด RLS / anon เขียนได้ / policy เขียนเปิดโล่ง / security definer ไม่ตั้ง search_path) ต้องรายงานครบทั้ง 4 รหัส · ลบของทดลองแล้วต้องไม่เหลือ',
