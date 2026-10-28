@@ -32,7 +32,7 @@ for (const c of mod.checks) {
 }
 if (asJson) console.log(JSON.stringify(results))
 else {
-  console.log(`ตรวจบทที่ ${Number(num)}${part ? ` (ส่วน ${{ win: 'ผลแรก', break: 'ลองพัง', extra: 'ต่อยอด' }[part] ?? part})` : ''}`)
+  console.log(`ตรวจบทที่ ${Number(num)}${part ? ` (ส่วน ${{ win: 'ผลแรก', break: 'ลองทดสอบหนัก ๆ', extra: 'ต่อยอด', ...mod.partNames }[part] ?? part})` : ''}`)
   for (const r of results) {
     const mark = r.skip ? '… ' : r.ok ? '✓ ' : '✗ '
     console.log(`${mark}${r.name}${!r.ok && !r.skip && r.hint ? `\n    → ${r.hint}` : ''}${r.skip ? `\n    → ${r.hint}` : ''}`)

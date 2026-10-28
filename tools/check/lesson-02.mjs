@@ -3,6 +3,9 @@ import { exists, read, lines, walk } from './lib.mjs'
 const plan = () => read('docs/plan-preorder.md')
 const nonEmpty = (p) => lines(p).filter((l) => l.trim()).length
 
+// ส่วน break ของบทนี้คือการเทียบกับ prompt แรกที่ถอยกลับไปแล้ว (flow v2 ของคอร์ส cc-no-mods)
+export const partNames = { break: 'เทียบกับ prompt แรก' }
+
 export const checks = [
   { part: 'win', name: 'มีแผน docs/plan-preorder.md ยาว 15–45 บรรทัด (พอดีหนึ่งหน้าจอ อ่านจบจริง)', run: () => ({ ok: nonEmpty('docs/plan-preorder.md') >= 15 && lines('docs/plan-preorder.md').length <= 50, hint: `ตอนนี้ ${nonEmpty('docs/plan-preorder.md')} บรรทัด (ทั้งไฟล์ ${lines('docs/plan-preorder.md').length}) — แผนต้องสั้นพอดีหนึ่งหน้าจอ` }) },
   {
@@ -44,9 +47,8 @@ export const checks = [
       return { ok: code.length === 0, hint: `มีไฟล์โค้ดที่ไม่ควรมีในบทนี้: ${code.join(', ')}` }
     },
   },
-  { part: 'break', name: 'มีแผนแบบกำกวม docs/plan-vague.md', run: () => ({ ok: nonEmpty('docs/plan-vague.md') >= 3, hint: 'ยังไม่มี docs/plan-vague.md' }) },
   {
-    part: 'break', name: 'มีใบเทียบ docs/เทียบแผน.md ที่บอกว่าแผนกำกวมต้อง "เดา" อะไร',
-    run: () => ({ ok: nonEmpty('docs/เทียบแผน.md') >= 5 && /เดา/.test(read('docs/เทียบแผน.md')), hint: 'ใบเทียบต้องมีอย่างน้อย 5 บรรทัดและใช้คำว่า "เดา" บอกว่าอะไรที่แผนกำกวมต้องเดา' }),
+    part: 'break', name: 'มีใบเทียบ docs/เทียบแผน.md ที่บอกว่า prompt แรก (สั่งประโยคเดียว) ทำให้ Claude ต้อง "เดา" อะไร',
+    run: () => ({ ok: nonEmpty('docs/เทียบแผน.md') >= 5 && /เดา/.test(read('docs/เทียบแผน.md')), hint: 'ใบเทียบต้องมีอย่างน้อย 5 บรรทัดและใช้คำว่า "เดา" บอกว่ารอบแรก Claude ต้องเดาอะไร และกฎของร้านข้อไหนหายไป' }),
   },
 ]
