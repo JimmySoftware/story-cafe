@@ -69,7 +69,7 @@ export const checks = [
       } finally { s?.stop(); await fake.close(); purgeAll() }
     },
   },
-  // ---- ลองพัง: LINE ล่ม / token ผิด / ส่งซ้ำ ----
+  // ---- ลองทดสอบหนัก ๆ: LINE ล่ม / token ผิด / ส่งซ้ำ ----
   {
     part: 'break', name: 'LINE ล่ม (500) → ออเดอร์ยังเข้า · แถวเป็น pending นับ attempts เลื่อนเวลา · พอ LINE กลับมาส่งสำเร็จด้วย retry key เดิม (ข้อความเดียว)',
     run: async () => {

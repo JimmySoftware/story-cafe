@@ -123,7 +123,7 @@ export const checks = [
       return { ok: p?.w === 1080 && p?.h === 1350 && statSync(join(root, 'out/poster.png')).size > 20000, hint: `ขนาด ${p?.w}×${p?.h}, ${statSync(join(root, 'out/poster.png')).size} ไบต์` }
     },
   },
-  // ---- ลองพัง: กดซ้ำ 20 ครั้ง ----
+  // ---- ลองทดสอบหนัก ๆ: กดซ้ำ 20 ครั้ง ----
   {
     part: 'break', name: 'กดซ้ำเมนูเดิม 3 ครั้ง → เรียกโมเดลแค่ครั้งเดียว (cache) · ใช้ --force → เรียกใหม่ · cache ไม่นับค่าใช้จ่าย',
     run: () => {

@@ -64,7 +64,7 @@ console.log(JSON.stringify({ ids: ids.map((b) => b.client_order_id), at: ids.map
       return { ok: r.ok, hint: r.ok ? '' : r.out.slice(-400) }
     },
   },
-  // ---- ลองพัง: คิว ----
+  // ---- ลองทดสอบหนัก ๆ: คิว ----
   {
     part: 'break', name: 'คิว: flush พร้อมกัน 3 สาย → บิลละครั้งเดียว · ส่งล้มกลางคัน → ใบที่สำเร็จออกจากคิว ที่เหลืออยู่ตามลำดับ ส่งซ้ำด้วย id เดิม · error retryable:false → ไป dead() แล้วส่งใบถัดไปต่อ · ตอบ duplicate:true ถือว่าส่งแล้ว · enqueue ระหว่าง flush ไม่หาย',
     run: () => {
@@ -96,7 +96,7 @@ console.log(JSON.stringify(out))`)
       return { ok: !bad.length, hint: bad.join(' · ') }
     },
   },
-  // ---- ลองพัง: ฐานข้อมูล ----
+  // ---- ลองทดสอบหนัก ๆ: ฐานข้อมูล ----
   {
     part: 'break', name: 'API pos_record_bill: บิลเดียวกันส่งซ้ำ = 1 แถว (duplicate:true id เดิม) · ส่งพร้อมกัน 10 สายด้วย id เดียว = 1 แถว ไม่มี error · 10 บิลต่าง id พร้อมกัน code ไม่ซ้ำ รูปแบบ PB-YYYYMMDD-NNNN',
     run: async () => {

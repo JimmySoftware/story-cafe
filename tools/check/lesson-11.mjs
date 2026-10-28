@@ -28,7 +28,7 @@ export const checks = [
     part: 'win', name: 'tools/rls-probe.mjs ยังอยู่และไม่ถูกแก้ให้ผ่านง่ายขึ้น (ยังตรวจ orders / order_items / pickup_slots / lookup_order)',
     run: () => { const t = read('tools/rls-probe.mjs'); return { ok: ['orders', 'order_items', 'pickup_slots', 'lookup_order', 'not_found'].every((k) => t.includes(k)), hint: 'ตัวช่วยตรวจถูกแก้ — ใช้ไฟล์เดิมของบท' } },
   },
-  // ---- ลองพัง: RLS ----
+  // ---- ลองทดสอบหนัก ๆ: RLS ----
   {
     part: 'break', name: 'ลูกค้า (anon) อ่าน orders / order_items / pickup_slots ตรง ๆ ไม่ได้ · เขียนไม่ได้ · ตารางอื่นเหมือนบท 9',
     run: () => {
@@ -41,7 +41,7 @@ export const checks = [
         const w = ["update orders set status='cancelled' returning 1", "delete from orders returning 1"].filter((q) => { const r = asRole('anon', q); return r.ok && r.out.trim() })
         const open = cnt('menu_items') >= 12 && cnt('options') === 12 && cnt('settings') >= 10 && cnt('ingredients') === 0
         return { ok: seed.ok && bad.length === 0 && grants.length === 0 && w.length === 0 && open,
-          hint: `anon ยังอ่านได้: ${bad.join(', ') || '-'} · สิทธิ์ SELECT ที่ยังเหลือ: ${[...new Set(grants)].join(', ') || '-'} · เขียนได้: ${w.length} · เมนู/ตัวเลือก/settings ยังเปิด และ ingredients ปิด: ${open}${seed.ok ? '' : ' · สั่งทดสอบไม่ได้ (place_preorder พัง)'}` }
+          hint: `anon ยังอ่านได้: ${bad.join(', ') || '-'} · สิทธิ์ SELECT ที่ยังเหลือ: ${[...new Set(grants)].join(', ') || '-'} · เขียนได้: ${w.length} · เมนู/ตัวเลือก/settings ยังเปิด และ ingredients ปิด: ${open}${seed.ok ? '' : ' · สั่งทดสอบไม่ได้ (place_preorder ใช้ไม่ได้)'}` }
       } finally { sql("delete from orders where phone='0900000556'") }
     },
   },

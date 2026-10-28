@@ -109,7 +109,7 @@ export const checks = [
       } finally { sv.forEach((x) => x.stop()); await fake.close(); sql(`update ingredients set stock=${ing} where name='นมวัว'`); purge() }
     },
   },
-  // ---- ลองพัง: webhook ปลอม / ซ้ำ / คนอื่น ----
+  // ---- ลองทดสอบหนัก ๆ: webhook ปลอม / ซ้ำ / คนอื่น ----
   {
     part: 'break', name: 'line_webhook: ลายเซ็นผิด / กุญแจผิด / ไม่มี header / body ขยะ → 401 และออเดอร์ไม่ถูกแตะ · ลายเซ็นถูกจากเจ้าของ "ยืนยัน SC-…" → confirmed + ตอบกลับด้วย reply API · events ว่าง (Verify) → 200',
     run: async () => {

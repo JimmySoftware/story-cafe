@@ -161,13 +161,13 @@ export const checks = [
     },
   },
   {
-    part: 'extra', name: 'สูตรของคุณเอง: mine/recipe.md ตามโครงสูตร (frontmatter ครบ, win ≤ 3 นาที, prompt 1 ชนะ + prompt 2 ลองพัง ในบล็อก text ≥ 80 ตัวอักษร, รู้ทันสูตร ≥ 2 ข้อ, ตรวจ) ไม่ใช่แม่แบบที่ยังไม่ได้แก้ · ไม่มีความลับ · node mine/check.mjs ผ่าน',
+    part: 'extra', name: 'สูตรของคุณเอง: mine/recipe.md ตามโครงสูตร (frontmatter ครบ, win ≤ 3 นาที, prompt 1 + prompt 2 ในบล็อก text ≥ 80 ตัวอักษร, รู้ทันสูตร ≥ 2 ข้อ, ตรวจ) ไม่ใช่แม่แบบที่ยังไม่ได้แก้ · ไม่มีความลับ · node mine/check.mjs ผ่าน',
     run: () => {
       const t = read('mine/recipe.md'); if (!t) return { ok: false, hint: 'ยังไม่มี mine/recipe.md (เริ่มจาก templates/recipe-template.md)' }
       const f = fm(t); if (!f) return { ok: false, hint: 'ไฟล์ต้องขึ้นต้นด้วย frontmatter --- ... ---' }
       const tpl = read('templates/recipe-template.md')
       const blocks = (h) => { const m = t.match(new RegExp(`## ${h}[^\\n]*\\n+\`\`\`text\\n([\\s\\S]*?)\\n\`\`\``)); return m?.[1] ?? '' }
-      const p1 = blocks('prompt 1 · ชนะ'), p2 = blocks('prompt 2 · ลองพัง')
+      const p1 = blocks('prompt 1 ·'), p2 = blocks('prompt 2 ·')
       const know = (t.match(/## รู้ทันสูตร\n([\s\S]*?)(?=\n## |$)/)?.[1] ?? '').split('\n').filter((l) => /^\s*[-*]\s+\S/.test(l)).length
       const placeholders = /\(prompt ที่ copy|\(prompt ที่ทำให้|ชื่อสูตรของคุณ|ตั้งรหัสเอง|สิ่งที่ผู้ใช้เห็นเป็นผลแรก/.test(t)
       const fmOk = f.schema === '1' && /^[a-z0-9-]+$/.test(f.id ?? '') && (f.title ?? '').length > 0 && (f.title ?? '').length <= 90 && (f.win ?? '').length >= 10 && Number(f.win_minutes) > 0 && Number(f.win_minutes) <= 3 && (f.start ?? '').length > 0 && /^node mine\/check\.mjs/.test(f.check ?? '') && f.level === 'write' && /^\d+\.\d+\.\d+$/.test(f.min_claude_code ?? '')

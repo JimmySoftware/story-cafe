@@ -116,7 +116,7 @@ export const checks = [
       } finally { await delUser(staff.id); await delUser(cust.id); await delUser(f.id) }
     },
   },
-  // ---------- ลองพัง: สต็อก ----------
+  // ---------- ลองทดสอบหนัก ๆ: สต็อก ----------
   {
     part: 'break', name: 'สต็อกตามสูตรครบ: ลาเต้ธรรมดา + ชามะนาว + ครัวซองต์ → เมล็ด −18, นมวัว −180, ชา −3, มะนาว −1, น้ำเชื่อม −20 (ครัวซองต์ไม่ตัด) · stock_history บันทึกตรงกับ ingredients.stock',
     run: async () => {

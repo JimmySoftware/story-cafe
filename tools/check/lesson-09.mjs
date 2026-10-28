@@ -123,7 +123,7 @@ export const checks = [
     part: 'win', name: 'CLAUDE.md อัปเดตแล้ว: บอกว่าข้อมูลร้านอยู่ในฐานข้อมูล (supabase / settings) และมีคำสั่ง test:db',
     run: () => { const t = read('CLAUDE.md'); return { ok: /supabase/i.test(t) && /settings/.test(t) && /test:db/.test(t), hint: 'CLAUDE.md ต้องพูดถึง supabase, ตาราง settings และ npm run test:db' } },
   },
-  // ---- ลองพัง ----
+  // ---- ลองทดสอบหนัก ๆ ----
   {
     part: 'break', name: 'ย้ายข้อมูลร้านเข้า settings จริง: ไม่มี data/shop.json และไม่มีโค้ดอ่านไฟล์นั้น (test ยังผ่าน)',
     run: () => {

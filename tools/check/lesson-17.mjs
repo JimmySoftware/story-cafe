@@ -85,7 +85,7 @@ export const checks = [
       return { ok: !e.length, hint: e.join('; ') }
     },
   },
-  // ---- ลองพัง ----
+  // ---- ลองทดสอบหนัก ๆ ----
   {
     part: 'break', name: 'โมเดลตอบผิดกติกาครั้งแรก → ลองใหม่ 1 ครั้งโดย prompt บอกข้อที่ผิด → สำเร็จด้วยผลที่ถูก (เรียก claude 2 ครั้ง)',
     run: () => {
@@ -112,7 +112,7 @@ export const checks = [
     },
   },
   {
-    part: 'break', name: 'ยังไม่ได้ล็อกอิน / claude พัง / ตอบไม่ใช่ JSON → exit ไม่ใช่ 0 · ไม่เขียนไฟล์ · ข้อความไทยบอกให้ /login (ไม่โชว์ stack trace)',
+    part: 'break', name: 'ยังไม่ได้ล็อกอิน / claude รันไม่ได้ / ตอบไม่ใช่ JSON → exit ไม่ใช่ 0 · ไม่เขียนไฟล์ · ข้อความไทยบอกให้ /login (ไม่โชว์ stack trace)',
     run: () => {
       if (!hasCli()) return NOCLI
       const a = cli([], { mode: 'login' }), b = cli([], { mode: 'garbage' }); try {

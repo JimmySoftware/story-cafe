@@ -1,4 +1,4 @@
-// ตัวตรวจบท 20: POS หน้าร้าน (Tauri) — คิดบิล (เทียบกับสูตรอ้างอิงของตัวตรวจ) · ลองพังกับข้อมูลแปลก ๆ · หน้าจอ (Playwright) · เปลือก Tauri
+// ตัวตรวจบท 20: POS หน้าร้าน (Tauri) — คิดบิล (เทียบกับสูตรอ้างอิงของตัวตรวจ) · ลองทดสอบหนัก ๆ กับข้อมูลแปลก ๆ · หน้าจอ (Playwright) · เปลือก Tauri
 import { spawnSync, spawn } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync, statSync, createReadStream } from 'node:fs'
 import { createServer } from 'node:http'
@@ -161,7 +161,7 @@ export const checks = [
     },
   },
   {
-    part: 'break', name: 'ลองพัง (ข้อมูลแปลก ๆ): วันเสาร์ตามเวลาไทย (ข้ามเที่ยงคืน UTC) · ใช้แต้มเกินที่มี/เกินยอด · ปัดเศษแต้ม · เงินไม่พอ · เมนู/จำนวน/ตัวเลือก/แต้มผิด → error ตามรหัสในบท · input ไม่ถูกแก้',
+    part: 'break', name: 'ลองทดสอบหนัก ๆ (ข้อมูลแปลก ๆ): วันเสาร์ตามเวลาไทย (ข้ามเที่ยงคืน UTC) · ใช้แต้มเกินที่มี/เกินยอด · ปัดเศษแต้ม · เงินไม่พอ · เมนู/จำนวน/ตัวเลือก/แต้มผิด → error ตามรหัสในบท · input ไม่ถูกแก้',
     run: () => compare(edge),
   },
   {

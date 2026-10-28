@@ -56,7 +56,7 @@ export const checks = [
     },
   },
   {
-    part: 'win', name: 'create_payment ปลอดภัย: key เป็น sk_live_ → ปฏิเสธ (ไม่เรียก Stripe) · Stripe พัง → 502 ไม่หลุด key/ข้อความ Stripe · ออเดอร์ที่จ่ายแล้ว → 409',
+    part: 'win', name: 'create_payment ปลอดภัย: key เป็น sk_live_ → ปฏิเสธ (ไม่เรียก Stripe) · Stripe ตอบ error → 502 ไม่หลุด key/ข้อความ Stripe · ออเดอร์ที่จ่ายแล้ว → 409',
     run: async () => {
       const n = need(); if (n) return n
       const s0 = snap()
@@ -77,7 +77,7 @@ export const checks = [
       } finally { sv.forEach((x) => x.stop()); await fake.close(); restock(s0); purge(u.id); await delUser(u.id) }
     },
   },
-  // ---- ลองพัง: webhook ปลอม / ซ้ำ ----
+  // ---- ลองทดสอบหนัก ๆ: webhook ปลอม / ซ้ำ ----
   {
     part: 'break', name: 'ตาราง stripe_events และฟังก์ชัน mark_order_paid / record_stripe_event ตาม brief · เรียกจากลูกค้า (anon/authenticated) ไม่ได้',
     run: async () => {

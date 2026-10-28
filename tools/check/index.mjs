@@ -27,7 +27,7 @@ for (const c of mod.checks) {
   if (part && c.part !== part) continue
   let r
   if (tagged && mod.skipOnTag?.(c)) { results.push({ part: c.part, name: c.name, ok: false, skip: true, hint: 'ข้าม (เป็นงานของผู้เรียน)' }); continue }
-  try { r = await c.run() } catch (e) { r = { ok: false, hint: `ตัวตรวจพัง: ${e.message}` } }
+  try { r = await c.run() } catch (e) { r = { ok: false, hint: `ตัวตรวจทำงานไม่สำเร็จ: ${e.message}` } }
   results.push({ part: c.part, name: c.name, ok: !!r.ok, skip: !!r.skip, hint: r.hint ?? '' })
 }
 if (asJson) console.log(JSON.stringify(results))
