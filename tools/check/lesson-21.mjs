@@ -131,7 +131,7 @@ console.log(JSON.stringify(out))`)
           return { item: it.name, qty: 1 + Math.floor(rnd() * 4), ...(Object.keys(o).length ? { options: o } : {}) } })
         const c = { lines, at: pick(days) }; if (rnd() < 0.7) { c.points_balance = Math.floor(rnd() * 200); c.redeem_points = Math.floor(rnd() * 300) }; if (rnd() < 0.6) c.cash_received = 200 + Math.floor(rnd() * 800); return c
       })
-      cases.push({ lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, cash_received: 10 }, { lines: [{ item: 'ลาเต้ส้ม', qty: 1 }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 0 }], at: MON }, { lines: [{ item: 'ครัวซองต์เนย', qty: 1, options: { size: 'L' } }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, redeem_points: -3, points_balance: 5 }, { lines: [], at: MON })
+      cases.push({ lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, cash_received: 10 }, { lines: [{ item: 'พิซซ่าฮาวาย', qty: 1 }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 0 }], at: MON }, { lines: [{ item: 'ครัวซองต์เนย', qty: 1, options: { size: 'L' } }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, redeem_points: -3, points_balance: 5 }, { lines: [], at: MON })
       const bad = []
       try {
         for (const [i, c] of cases.entries()) {

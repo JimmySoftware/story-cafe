@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { join } from 'node:path'
 import { root, onTag } from './lib.mjs'
+import { queueMark, queueSweep } from './db.mjs'
 
 const args = process.argv.slice(2)
 const num = args.find((a) => /^\d+$/.test(a))
@@ -27,7 +28,9 @@ for (const c of mod.checks) {
   if (part && c.part !== part) continue
   let r
   if (tagged && mod.skipOnTag?.(c)) { results.push({ part: c.part, name: c.name, ok: false, skip: true, hint: 'ข้าม (เป็นงานของผู้เรียน)' }); continue }
+  const mark = existsSync(join(root, 'supabase/config.toml')) ? queueMark() : null // ข้อที่สร้างออเดอร์ทดลองต้องไม่ทิ้งแถวค้างในคิว (ทำให้ test:db ตก)
   try { r = await c.run() } catch (e) { r = { ok: false, hint: `ตัวตรวจทำงานไม่สำเร็จ: ${e.message}` } }
+  queueSweep(mark)
   results.push({ part: c.part, name: c.name, ok: !!r.ok, skip: !!r.skip, hint: r.hint ?? '' })
 }
 if (asJson) console.log(JSON.stringify(results))

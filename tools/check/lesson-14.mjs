@@ -40,7 +40,7 @@ export const checks = [
       const miss = []
       for (const f of SRC) if (!t.includes(f)) miss.push(f)
       if (!/README/.test(t)) miss.push('คำว่า README (เทียบคำอ้าง)')
-      if (!/(ไม่ตรง|ขัดแย้ง|ต่างจาก|ไม่เป็นจริง|ไม่จริง|โกหก|คลาดเคลื่อน)/.test(t)) miss.push('ข้อความที่บอกว่า README ไม่ตรงโค้ด')
+      if (!/(ไม่ตรง|ขัดแย้ง|ต่างจาก|ไม่เป็นจริง|ไม่จริง|โกหก|คลาดเคลื่อน|FAIL|ไม่ผ่าน|ผิดกฎ)/.test(t)) miss.push('ข้อความที่บอกว่า README ไม่ตรงโค้ด')
       return { ok: miss.length === 0 && lines('docs/loyalty-summary.md').filter((l) => l.trim()).length >= 15, hint: `สรุปยังขาด: ${miss.join(', ') || 'ยาวไม่ถึง 15 บรรทัด'}` }
     },
   },

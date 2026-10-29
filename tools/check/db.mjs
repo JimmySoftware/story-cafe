@@ -20,6 +20,23 @@ export const scalar = (q) => rows(q)?.[0]?.[0] ?? null
 // รัน SQL ในฐานะ role (anon / authenticated) แล้ว rollback ทุกอย่าง
 export const asRole = (role, q) => sql(`begin; set local role ${role}; ${q}; rollback;`)
 
+// ตัวตรวจทิ้งแถวในคิวแจ้งเตือน (notify_queue) ไว้ไม่ได้: test SQL ของผู้เรียนมักสมมติว่าคิวมีแต่แถวของตัวเอง
+// queueMark() จดรหัสแถวที่มีอยู่ก่อนรันแต่ละข้อ · queueSweep() ลบเฉพาะแถวที่ข้อนั้นสร้างเพิ่ม (แถวเดิมของผู้เรียนไม่แตะ)
+export function queueMark() {
+  try {
+    if (scalar("select to_regclass('public.notify_queue') is not null") !== 't') return null
+    return new Set(rows('select id from public.notify_queue')?.map((r) => r[0]) ?? [])
+  } catch { return null }
+}
+export function queueSweep(mark) {
+  if (!mark) return
+  try {
+    const now = rows('select id from public.notify_queue')?.map((r) => r[0]) ?? []
+    const mine = now.filter((id) => !mark.has(id))
+    if (mine.length) sql(`delete from public.notify_queue where id in (${mine.map((i) => `'${i}'`).join(',')})`)
+  } catch {}
+}
+
 export const dbUp = () => scalar('select 1') === '1'
 
 // CSV แบบง่าย (ไม่มี quote) ของร้าน → [{หัว: ค่า}]

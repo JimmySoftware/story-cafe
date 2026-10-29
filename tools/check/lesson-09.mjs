@@ -46,10 +46,16 @@ export const checks = [
     part: 'win', name: 'menu_items ตรงกับ data/menu.csv ทุกแถว (ราคา หมวด เครื่องดื่ม ลำดับ) — 12 รายการ',
     run: () => {
       const n = need(); if (n) return n
-      const want = baseMenu().map((r, i) => [r.category, r.name, r.price, r.is_drink === '1' ? 't' : 'f', String(i + 1)].join('|'))
-      const got = (rows("select category,name,price,is_drink,sort from menu_items where name in (" + baseMenu().map((r) => `'${r.name.replace(/'/g, "''")}'`).join(',') + ') order by sort') ?? []).map((r) => r.join('|'))
+      // 12 เมนูเดิมต้องเรียงตามลำดับในไฟล์ · เมนูที่เจ้าของเพิ่มทีหลัง (เช่น ต่อยอดบท 6) ได้ แต่ต้องอยู่ท้ายสุด
+      const base = baseMenu(), names = base.map((r) => r.name)
+      const want = base.map((r) => [r.category, r.name, r.price, r.is_drink === '1' ? 't' : 'f'].join('|'))
+      const all = (rows('select category,name,price,is_drink,sort from menu_items order by sort') ?? [])
+      const canon12 = all.filter((r) => names.includes(r[1])), extras = all.filter((r) => !names.includes(r[1]))
+      const got = canon12.map((r) => r.slice(0, 4).join('|'))
       const bad = want.filter((w, i) => got[i] !== w)
-      return { ok: want.length === 12 && got.length === want.length && bad.length === 0, hint: `ไม่ตรง ${bad.length} แถว เช่น ต้องเป็น "${bad[0] ?? ''}" ได้ "${got[want.indexOf(bad[0])] ?? '(ไม่มี)'}"` }
+      const maxCanon = Math.max(-Infinity, ...canon12.map((r) => Number(r[4]))), minExtra = Math.min(Infinity, ...extras.map((r) => Number(r[4])))
+      const extraBad = extras.length > 0 && !(minExtra > maxCanon)
+      return { ok: want.length === 12 && got.length === 12 && bad.length === 0 && !extraBad, hint: extraBad ? `เมนูที่เพิ่มทีหลัง (${extras.map((r) => r[1]).join(', ')}) ต้องมี sort มากกว่า 12 เมนูเดิม (ให้ต่อท้าย) ไม่แทรกกลาง` : `ไม่ตรง ${bad.length} แถว เช่น ต้องเป็น "${bad[0] ?? ''}" ได้ "${got[want.indexOf(bad[0])] ?? '(ไม่มี)'}"` }
     },
   },
   {

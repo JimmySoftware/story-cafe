@@ -62,7 +62,7 @@ const edge = [
   { lines: [{ item: 'ลาเต้', qty: 99 }], at: MON },
   { lines: [{ item: 'ลาเต้', qty: 1 }], cash_received: 75, at: MON },
   { lines: [{ item: 'ลาเต้', qty: 1 }], cash_received: 74, at: MON, throws: 'cash_short' },
-  { lines: [{ item: 'ลาเต้ส้ม', qty: 1 }], at: MON, throws: 'unknown_item' },
+  { lines: [{ item: 'พิซซ่าฮาวาย', qty: 1 }], at: MON, throws: 'unknown_item' },
   { lines: [{ item: 'ลาเต้', qty: 0 }], at: MON, throws: 'bad_qty' },
   { lines: [{ item: 'ลาเต้', qty: 1.5 }], at: MON, throws: 'bad_qty' },
   { lines: [{ item: 'ลาเต้', qty: 100 }], at: MON, throws: 'bad_qty' },
