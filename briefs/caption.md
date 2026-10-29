@@ -24,7 +24,7 @@
 - ถ้าจะทำเป็นบริการให้ร้านอื่นใช้ (เช่น SaaS) ต้องใช้ **API key** ของบริการนั้นเอง ไม่ใช่ล็อกอินส่วนตัวของคุณ
 - โค้ดอ่านโหมดจาก env: ถ้ามี `ANTHROPIC_API_KEY` = โหมด api-key ไม่มี = โหมด login · `tools/caption/auth.ts` ส่งออก `checkAuth(env)` คืน `{ mode: 'login' | 'api-key', keyOk: boolean | null }` (`keyOk` ตรวจแค่ **รูปแบบ** ว่าขึ้นต้น `sk-ant-` และยาว ≥ 20 ตัว ไม่ได้ยิงเน็ต; โหมด login = `null`)
 - `node --import tsx tools/caption/cli.ts --auth-check` พิมพ์บรรทัดภาษาไทยบอกโหมด (และถ้าเป็น api-key บอกว่ารูปแบบ key ใช้ได้/ไม่ได้) · **ห้ามพิมพ์ key ออกมาทุกกรณี** (ทั้งเต็มและบางส่วน) · exit 0 เมื่อโหมด login หรือ key รูปแบบถูก, exit 1 เมื่อ key รูปแบบผิด
-- `.env.example` มีบรรทัด `ANTHROPIC_API_KEY=` (ค่าว่าง) มาให้แล้ว (กฎตู้เซฟบท 3 ห้าม Claude อ่าน/แก้ไฟล์ `.env.*` — ถ้าต้องแก้ ให้คุณแก้เอง) แล้วเขียน `docs/personal-vs-service.md` อธิบายเส้นนี้สั้น ๆ (คำว่า "ส่วนตัว", "ให้บริการ", "API key") พร้อมลิงก์เอกสารทางการ: https://code.claude.com/docs/en/legal-and-compliance
+- เพิ่มบรรทัด `ANTHROPIC_API_KEY=` (ค่าว่าง) ใน `.env.example` (ไฟล์นี้ไม่มีความลับ Claude อ่านและแก้ได้ · ห้ามแตะ `.env` กับ `.env.local`) แล้วเขียน `docs/personal-vs-service.md` อธิบายเส้นนี้สั้น ๆ (คำว่า "ส่วนตัว", "ให้บริการ", "API key") พร้อมลิงก์เอกสารทางการ: https://code.claude.com/docs/en/legal-and-compliance
 - key จริงห้ามอยู่ในแชทหรือไฟล์ที่ commit: key ทดสอบในโค้ดต้องเป็นของปลอมที่ดูปลอม (`sk-ant-FAKE-…`)
 
 ## เสร็จเมื่อ
