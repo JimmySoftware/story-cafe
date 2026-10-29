@@ -35,6 +35,8 @@ for (let round = 1; round <= rounds + 1; round++) {
   calls++
   try { cost += Number(JSON.parse(r.stdout.trim().split('\n').pop()).total_cost_usd ?? 0) } catch { /* ไม่มีราคา */ }
   if (r.error || r.status === null) { why = `เรียก claude ไม่ได้: ${r.error?.message ?? 'timeout'}`; break }
+  let out = {}; try { out = JSON.parse(r.stdout.trim().split('\n').pop()) } catch { /* ไม่ใช่ JSON */ }
+  if (/not logged in|\/login/i.test(`${out.result ?? ''} ${r.stderr ?? ''}`)) { why = 'claude -p ตอบว่ายังไม่ได้ login (Not logged in) · พิมพ์ ! claude แล้ว /login ก่อน แล้วรัน green-loop ใหม่'; break }
 }
 console.log('\nรอบ | ข้อที่แดง | ค่าใช้จ่ายสะสม (USD)')
 for (const t of table) console.log(`${String(t.round).padStart(3)} | ${String(t.failing).padStart(9)} | ${t.cost.toFixed(2)}`)
