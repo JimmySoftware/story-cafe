@@ -13,7 +13,11 @@ const need = () => (dbUp() ? null : { ok: false, hint: 'ติดต่อฐา
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const has = (f) => exists(`pos/src/${f}`)
 const PHONE = '0900000021'
-const MON = '2026-10-26T10:00:00+07:00'
+// เซิร์ฟเวอร์ที่ถูกต้องไม่เชื่อ p_at / p_points_balance จาก client (fix รอบ 2): ตัวตรวจจึงส่งเวลาที่ "เพิ่งเกิดขึ้น" (ไม่เก่าเกินช่วงที่ใคร ๆ ก็รับ)
+// แล้วอ่านวันเวลาของบิลจริงจากฐานข้อมูล · แต้มคงเหลือหาจากบิลที่ตัวตรวจเพิ่มแต้มให้เบอร์นั้นเอง ไม่ได้สมมติชื่อตารางแต้มของใคร
+const recent = (hoursAgo = 0) => new Date(Date.now() - hoursAgo * 3600e3 - 60e3).toISOString()
+const callBill = async (args, token) => { const r = await rpc('pos_record_bill', args, token); return !r.ok && /PGRST202/.test(r.text) && 'p_at' in args ? rpc('pos_record_bill', Object.fromEntries(Object.entries(args).filter(([k]) => k !== 'p_at')), token) : r }
+const billAt = (id) => scalar(`select to_char(at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') from pos_bills where id='${id}'`)
 
 function tsRun(code) {
   const d = mkdtempSync(join(tmpdir(), 'cafe-ts-')), f = join(d, 'run.mts'); writeFileSync(f, code)
@@ -103,14 +107,14 @@ console.log(JSON.stringify(out))`)
       const n = need(); if (n) return n
       const staff = await newUser('pos21', { appMetadata: { role: 'staff' } })
       try {
-        const body = (id, extra = {}) => ({ p_client_order_id: id, p_lines: [{ item: 'ลาเต้', qty: 1, options: { size: 'M' } }], p_cash_received: 100, p_at: MON, p_customer_phone: PHONE, ...extra })
-        const id = crypto.randomUUID(); const a = await rpc('pos_record_bill', body(id), staff.token), b = await rpc('pos_record_bill', body(id), staff.token)
+        const body = (id, extra = {}) => ({ p_client_order_id: id, p_lines: [{ item: 'ลาเต้', qty: 1, options: { size: 'M' } }], p_cash_received: 100, p_at: recent(), p_customer_phone: PHONE, ...extra })
+        const id = crypto.randomUUID(); const a = await callBill(body(id), staff.token), b = await callBill(body(id), staff.token)
         if (a.status !== 200) return { ok: false, hint: `เรียกครั้งแรกไม่ผ่าน (${a.status}): ${a.text.slice(0, 200)}` }
         const one = Number(scalar(`select count(*) from pos_bills where client_order_id='${id}'`))
-        const id2 = crypto.randomUUID(); const par = await Promise.all(Array.from({ length: 10 }, () => rpc('pos_record_bill', body(id2), staff.token)))
+        const id2 = crypto.randomUUID(); const par = await Promise.all(Array.from({ length: 10 }, () => callBill(body(id2), staff.token)))
         const one2 = Number(scalar(`select count(*) from pos_bills where client_order_id='${id2}'`)), okAll = par.every((r) => r.status === 200), dups = par.filter((r) => r.body?.duplicate === true).length
-        const ids3 = Array.from({ length: 10 }, () => crypto.randomUUID()); const par3 = await Promise.all(ids3.map((i) => rpc('pos_record_bill', body(i), staff.token)))
-        const codes = par3.map((r) => r.body?.code), fmt = codes.every((c) => /^PB-20261026-\d{4}$/.test(c ?? '')), uniq = new Set(codes).size === 10
+        const ids3 = Array.from({ length: 10 }, () => crypto.randomUUID()); const par3 = await Promise.all(ids3.map((i) => callBill(body(i), staff.token)))
+        const codes = par3.map((r) => r.body?.code), fmt = codes.every((c) => /^PB-\d{8}-\d{4}$/.test(c ?? '')) && par3.every((r) => r.ok && (r.body?.code ?? '').slice(3, 11) === new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(billAt(r.body.id))).replaceAll('-', '')), uniq = new Set(codes).size === 10
         const items = Number(scalar(`select count(*) from pos_bill_items where bill_id='${a.body.id}'`))
         return { ok: b.body?.duplicate === true && a.body?.duplicate === false && b.body?.id === a.body?.id && one === 1 && one2 === 1 && okAll && dups === 9 && fmt && uniq && items === 1,
           hint: `ซ้ำ: duplicate=${b.body?.duplicate}/${a.body?.duplicate} id เดิม=${b.body?.id === a.body?.id} แถว ${one} · พร้อมกัน: แถว ${one2} สถานะ ${par.map((r) => r.status).join(',')} duplicate ${dups}/9 · code ${codes.slice(0, 3).join(',')} รูปแบบ=${fmt} ไม่ซ้ำ=${uniq} · รายการใน pos_bill_items ${items}` }
@@ -118,33 +122,43 @@ console.log(JSON.stringify(out))`)
     },
   },
   {
-    part: 'break', name: 'API คิดเองฝั่งเซิร์ฟเวอร์: บิลสุ่ม 40 ใบ (ตัวเลือก แต้ม เงินรับ วันเสาร์/ข้ามเที่ยงคืน UTC) ได้ยอด/ลด/ทอน/แต้มตรงสูตรอ้างอิง · ข้อมูลผิด error code เดียวกับ bill.ts · ส่งยอดรวมมาเองไม่ได้',
+    part: 'break', name: 'API คิดเองฝั่งเซิร์ฟเวอร์: บิลสุ่ม 40 ใบ (ตัวเลือก แต้ม เงินรับ) ได้ยอด/ลด/ทอน/แต้มตรงสูตรอ้างอิงโดยใช้แต้มคงเหลือและวันเวลา "ของเซิร์ฟเวอร์เอง" · ข้อมูลผิด error code เดียวกับ bill.ts · ส่งยอดรวมมาเองไม่ได้',
     run: async () => {
       const n = need(); if (n) return n
       const staff = await newUser('pos21b', { appMetadata: { role: 'staff' } }); const cat = catalog()
       let s = 2121; const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff, pick = (a) => a[Math.floor(rnd() * a.length)]
       const lab = (k) => cat.options.filter((o) => o.kind === k).map((o) => o.label)
-      const days = [MON, '2026-10-24T10:00:00+07:00', '2026-10-23T18:30:00Z', '2026-10-24T17:30:00Z']
-      const cases = Array.from({ length: 40 }, () => {
-        const lines = Array.from({ length: 1 + Math.floor(rnd() * 3) }, () => { const it = pick(cat.items); const o = {}
-          if (it.is_drink) { if (rnd() < 0.7) o.size = pick(lab('size')); if (rnd() < 0.5) o.milk = pick(lab('milk')); if (rnd() < 0.5) o.sweetness = pick(lab('sweetness')); if (rnd() < 0.3) o.extra_shots = Math.floor(rnd() * 5) }
-          return { item: it.name, qty: 1 + Math.floor(rnd() * 4), ...(Object.keys(o).length ? { options: o } : {}) } })
-        const c = { lines, at: pick(days) }; if (rnd() < 0.7) { c.points_balance = Math.floor(rnd() * 200); c.redeem_points = Math.floor(rnd() * 300) }; if (rnd() < 0.6) c.cash_received = 200 + Math.floor(rnd() * 800); return c
+      const phones = []
+      const mkLines = () => Array.from({ length: 1 + Math.floor(rnd() * 3) }, () => { const it = pick(cat.items); const o = {}
+        if (it.is_drink) { if (rnd() < 0.7) o.size = pick(lab('size')); if (rnd() < 0.5) o.milk = pick(lab('milk')); if (rnd() < 0.5) o.sweetness = pick(lab('sweetness')); if (rnd() < 0.3) o.extra_shots = Math.floor(rnd() * 5) }
+        return { item: it.name, qty: 1 + Math.floor(rnd() * 4), ...(Object.keys(o).length ? { options: o } : {}) } })
+      const cases = Array.from({ length: 40 }, (_, i) => {
+        const c = { lines: mkLines(), hoursAgo: Math.floor(rnd() * 40), phone: `09${String(21000000 + i).padStart(8, '0')}` }
+        if (rnd() < 0.7) { c.want = Math.floor(rnd() * 200); const m = rnd(); c.mode = m < 0.4 ? 'part' : m < 0.7 ? 'over' : 'none'; c.extra = Math.floor(rnd() * 300) } else if (rnd() < 0.3) c.redeem_points = 30
+        if (rnd() < 0.6) c.cash_received = 200 + Math.floor(rnd() * 800)
+        return c
       })
-      cases.push({ lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, cash_received: 10 }, { lines: [{ item: 'พิซซ่าฮาวาย', qty: 1 }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 0 }], at: MON }, { lines: [{ item: 'ครัวซองต์เนย', qty: 1, options: { size: 'L' } }], at: MON }, { lines: [{ item: 'ลาเต้', qty: 1 }], at: MON, redeem_points: -3, points_balance: 5 }, { lines: [], at: MON })
+      const bad0 = (lines, throws, extra = {}) => ({ lines, throws, phone: `0921${String(Math.floor(rnd() * 1e6)).padStart(6, '0')}`, hoursAgo: 1, ...extra })
+      cases.push(bad0([{ item: 'ลาเต้', qty: 1 }], 'cash_short', { cash_received: 10 }), bad0([{ item: 'พิซซ่าฮาวาย', qty: 1 }], 'unknown_item'), bad0([{ item: 'ลาเต้', qty: 0 }], 'bad_qty'), bad0([{ item: 'ครัวซองต์เนย', qty: 1, options: { size: 'L' } }], 'bad_option'), bad0([{ item: 'ลาเต้', qty: 1 }], 'bad_points', { redeem_points: -3 }), bad0([], 'empty_bill'))
       const bad = []
+      const send = (c, lines, balance, redeem) => callBill({ p_client_order_id: crypto.randomUUID(), p_lines: lines, p_redeem_points: redeem ?? 0, p_points_balance: balance ?? 0, p_cash_received: c.cash_received ?? null, p_at: recent(c.hoursAgo), p_customer_phone: c.phone }, staff.token)
       try {
         for (const [i, c] of cases.entries()) {
-          const r = await rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: c.lines, p_redeem_points: c.redeem_points ?? 0, p_points_balance: c.points_balance ?? 0, p_cash_received: c.cash_received ?? null, p_at: c.at, p_customer_phone: PHONE }, staff.token)
-          const w = ref(c, cat)
+          phones.push(c.phone)
+          // แต้มคงเหลือ = ที่เซิร์ฟเวอร์ให้เบอร์นี้จากบิลที่ตัวตรวจเพิ่มเอง (ไม่ขึ้นกับว่าเซิร์ฟเวอร์เก็บแต้มไว้ในตารางไหน)
+          let bal = 0
+          if (c.want) for (let k = 0; k < 4 && bal < c.want; k++) { const r = await send({ hoursAgo: 1, phone: c.phone }, [{ item: 'ลาเต้', qty: 99 }], bal, 0); if (!r.ok) { bad.push(`#${i} เติมแต้มให้เบอร์ทดสอบไม่ได้ (${r.status}): ${r.text.slice(0, 80)}`); break } bal += r.body.points_earned - r.body.points_redeemed }
+          const redeem = c.redeem_points ?? (c.mode === 'part' ? Math.floor(rnd() * (bal + 1)) : c.mode === 'over' ? bal + 1 + c.extra : 0)
+          const r = await send(c, c.lines, bal, redeem)
+          const at = r.ok ? new Date(billAt(r.body.id)).toISOString() : recent(c.hoursAgo) // วันที่ของบิล = วันที่เซิร์ฟเวอร์เลือก (ใช้ p_at ที่ส่ง หรือเวลาเซิร์ฟเวอร์ก็ได้)
+          const w = ref({ lines: c.lines, redeem_points: redeem, points_balance: bal, cash_received: c.cash_received, at }, cat)
           if (w.throws) { if (r.ok || !String(r.body?.message ?? '').startsWith(`${w.throws}:`)) bad.push(`#${i} ควร ${w.throws} ได้ ${r.status} ${String(r.body?.message ?? '').slice(0, 50)}`) }
-          else { const o = w.ok, g = r.body; if (!r.ok || g.subtotal !== o.subtotal || g.discount !== o.discount || g.total !== o.total || (g.change ?? null) !== o.change || g.points_earned !== o.points_earned || g.points_redeemed !== o.points_redeemed) bad.push(`#${i} ควร ${o.subtotal}/${o.discount}/${o.total}/${o.change}/${o.points_earned} ได้ ${r.ok ? [g.subtotal, g.discount, g.total, g.change, g.points_earned].join('/') : r.text.slice(0, 80)}`) }
+          else { const o = w.ok, g = r.body; if (!r.ok || g.subtotal !== o.subtotal || g.discount !== o.discount || g.total !== o.total || (g.change ?? null) !== o.change || g.points_earned !== o.points_earned || g.points_redeemed !== o.points_redeemed) bad.push(`#${i} (แต้มคงเหลือ ${bal} ขอใช้ ${redeem}) ควร ${o.subtotal}/${o.discount}/${o.total}/${o.change}/${o.points_earned} ได้ ${r.ok ? [g.subtotal, g.discount, g.total, g.change, g.points_earned].join('/') : r.text.slice(0, 80)}`) }
         }
         const tamper = await rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: [{ item: 'ลาเต้', qty: 1 }], p_total: 1 }, staff.token)
         if (tamper.ok) bad.push('ส่ง p_total มาเองแล้วยังผ่าน (ต้องไม่รับยอดรวมจาก client)')
-        const sat = scalar(`select points_earned from pos_bills where customer_phone='${PHONE}' and at='2026-10-23T18:30:00Z' limit 1`)
-        return { ok: !bad.length, hint: bad.slice(0, 4).join(' | ') + (bad.length > 4 ? ` … (ผิด ${bad.length}/${cases.length + 1})` : '') + (sat === null ? '' : '') }
-      } finally { sql(`delete from pos_bills where customer_phone='${PHONE}'`); await delUser(staff.id) }
+        return { ok: !bad.length, hint: bad.slice(0, 4).join(' | ') + (bad.length > 4 ? ` … (ผิด ${bad.length}/${cases.length + 1})` : '') }
+      } finally { sql(`delete from pos_bills where customer_phone in (${phones.map((p) => `'${p}'`).join(',')})`); await delUser(staff.id) }
     },
   },
   {
@@ -156,15 +170,16 @@ console.log(JSON.stringify(out))`)
       const c = await api('/auth/v1/admin/users', { key: e.SUPABASE_SECRET_KEY, body: { email, password: 'Check-pass-123', email_confirm: true, user_metadata: { role: 'staff' } } })
       const forged = (await api('/auth/v1/token?grant_type=password', { body: { email, password: 'Check-pass-123' } })).body.access_token
       try {
-        const call = (tok) => rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: [{ item: 'ลาเต้', qty: 1 }], p_customer_phone: PHONE, p_at: MON }, tok)
+        const call = (tok) => rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: [{ item: 'ลาเต้', qty: 1 }], p_customer_phone: PHONE, p_at: recent() }, tok)
         const rs = { anon: await call(undefined), cust: await call(cust.token), forged: await call(forged) }
         const okCall = await call(staff.token)
-        const ins = await api('/rest/v1/pos_bills', { token: staff.token, body: { client_order_id: crypto.randomUUID(), subtotal: 1, discount: 0, total: 1, points_earned: 0, points_redeemed: 0, at: MON } })
+        const ins = await api('/rest/v1/pos_bills', { token: staff.token, body: { client_order_id: crypto.randomUUID(), subtotal: 1, discount: 0, total: 1, points_earned: 0, points_redeemed: 0, at: recent() } })
         const rd = async (tok) => { const r = await api('/rest/v1/pos_bills?select=id', { token: tok }); return Array.isArray(r.body) ? r.body.length : -1 }
         const seen = { anon: await rd(undefined), cust: await rd(cust.token), forged: await rd(forged), staff: await rd(staff.token) }
         const t = walk('supabase/tests').filter((f) => /pos_bills/i.test(f))
         const db = t.length ? run('bash', ['tools/dbtest.sh']) : { ok: false, out: 'ยังไม่มี supabase/tests/*pos_bills*.sql' }
-        const ok = !rs.anon.ok && !rs.cust.ok && !rs.forged.ok && okCall.ok && !ins.ok && seen.anon <= 0 && seen.cust <= 0 && seen.forged <= 0 && seen.staff >= 1 && db.ok
+        const denied = (r) => !r.ok && ([401, 403].includes(r.status) || /forbidden|permission denied|not.?authori[sz]ed|unauthori[sz]ed|jwt/i.test(r.text)) // ถูกปฏิเสธเพราะสิทธิ์ (401/403 หรือ exception forbidden: จาก RPC) ไม่ใช่ตกเพราะข้อมูลอื่นผิด
+        const ok = denied(rs.anon) && denied(rs.cust) && denied(rs.forged) && okCall.ok && !ins.ok && seen.anon <= 0 && seen.cust <= 0 && seen.forged <= 0 && seen.staff >= 1 && db.ok
         return { ok, hint: `เรียก: anon ${rs.anon.status} ลูกค้า ${rs.cust.status} ปลอมเป็นพนักงาน ${rs.forged.status} (ต้องไม่ผ่านทั้งหมด) พนักงาน ${okCall.status} · INSERT ตรงโดยพนักงาน ${ins.status} (ต้องถูกปฏิเสธ) · เห็นบิล: ${JSON.stringify(seen)} (anon/ลูกค้า/ปลอม ต้อง 0, พนักงานเห็น) · test:db ${db.ok ? 'ผ่าน' : db.out.slice(-250)}` }
       } finally { sql(`delete from pos_bills where customer_phone='${PHONE}'`); await delUser(staff.id); await delUser(cust.id); await delUser(c.body.id) }
     },

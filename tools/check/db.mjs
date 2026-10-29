@@ -20,23 +20,54 @@ export const scalar = (q) => rows(q)?.[0]?.[0] ?? null
 // รัน SQL ในฐานะ role (anon / authenticated) แล้ว rollback ทุกอย่าง
 export const asRole = (role, q) => sql(`begin; set local role ${role}; ${q}; rollback;`)
 
-// ตัวตรวจทิ้งแถวในคิวแจ้งเตือน (notify_queue) ไว้ไม่ได้: test SQL ของผู้เรียนมักสมมติว่าคิวมีแต่แถวของตัวเอง
-// queueMark() จดรหัสแถวที่มีอยู่ก่อนรันแต่ละข้อ · queueSweep() ลบเฉพาะแถวที่ข้อนั้นสร้างเพิ่ม (แถวเดิมของผู้เรียนไม่แตะ)
-export function queueMark() {
-  try {
-    if (scalar("select to_regclass('public.notify_queue') is not null") !== 't') return null
-    return new Set(rows('select id from public.notify_queue')?.map((r) => r[0]) ?? [])
-  } catch { return null }
+// ตัวตรวจต้องคืนฐานข้อมูลให้เหมือนที่เจอ (fix รอบ 2): test SQL ของผู้เรียนมักสมมติว่าตารางมีแต่แถวของตัวเอง
+// (คิวแจ้งเตือน, ตัวนับเลขบิล, stock_history, pickup_slots, แต้มสะสม …) ถ้า probe ของข้อไหนทิ้งแถวไว้ test:db จะตกในบทหลัง ๆ
+// dbMark() จดทุกแถวของทุกตารางใน schema public (เฉพาะตารางที่มี primary key) ก่อนรันแต่ละข้อ
+// dbSweep() หลังรันข้อนั้น: ลบแถวที่เพิ่มมา และคืนค่าแถวเดิมที่ถูกแก้ (เช่น สต็อก, จำนวนแก้วในช่อง) — แถวของผู้เรียนที่มีอยู่ก่อนไม่ถูกแตะ
+const PKS = `select c.relname || ':' || string_agg(quote_ident(a.attname), ',' order by k.ord)
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  join pg_index i on i.indrelid = c.oid and i.indisprimary
+  cross join lateral unnest(i.indkey) with ordinality k(attnum, ord)
+  join pg_attribute a on a.attrelid = c.oid and a.attnum = k.attnum
+  where n.nspname = 'public' and c.relkind = 'r' group by c.relname order by c.relname`
+function dbSnap() {
+  const pks = sql(PKS)
+  if (!pks.ok) return null
+  const tabs = pks.out.trim().split('\n').filter(Boolean).map((l) => { const [t, c] = l.split(':'); return { t, cols: c.split(',') } })
+  if (!tabs.length) return { tabs: [], data: {} }
+  const key = (cols) => `concat_ws('~', ${cols.map((c) => `x.${c}::text`).join(', ')})`
+  const q = `select json_build_object(${tabs.map(({ t, cols }) => `'${t}', (select coalesce(json_object_agg(${key(cols)}, row_to_json(x)), '{}'::json) from public."${t}" x)`).join(', ')})::text`
+  const r = run('docker', ['exec', '-i', container(), 'psql', '-U', 'postgres', '-d', 'postgres', '-tAq', '-v', 'ON_ERROR_STOP=1', '-c', q], { maxBuffer: 256 * 1024 * 1024 })
+  if (!r.ok) return null
+  try { return { tabs, data: JSON.parse(r.out.trim()) } } catch { return null }
 }
-export function queueSweep(mark) {
+export function dbMark() { try { return dbSnap() } catch { return null } }
+export function dbSweep(mark) {
   if (!mark) return
   try {
-    const now = rows('select id from public.notify_queue')?.map((r) => r[0]) ?? []
-    const mine = now.filter((id) => !mark.has(id))
-    if (mine.length) sql(`delete from public.notify_queue where id in (${mine.map((i) => `'${i}'`).join(',')})`)
+    const now = dbSnap(); if (!now) return
+    const lit = (o) => `'${JSON.stringify(o).replace(/'/g, "''")}'::json`
+    const del = [], upd = []
+    for (const { t, cols } of mark.tabs) {
+      const before = mark.data[t] ?? {}, after = now.data[t] ?? {}
+      const where = (k, a = '') => { const v = k.split('~'); return cols.map((c, i) => `${a}${c}::text = '${(v[i] ?? '').replace(/'/g, "''")}'`).join(' and ') }
+      for (const k of Object.keys(after)) {
+        if (!(k in before)) del.push({ t, k, where: where(k) })
+        else if (JSON.stringify(after[k]) !== JSON.stringify(before[k])) upd.push({ t, k, row: before[k], where: where(k, 'x.') })
+      }
+    }
+    for (const u of upd) {
+      const cs = (rows(`select quote_ident(attname) from pg_attribute where attrelid = 'public."${u.t}"'::regclass and attnum > 0 and not attisdropped and attgenerated = '' and attidentity <> 'a'`) ?? []).map((r) => r[0]).filter((c) => (c.replace(/"/g, '') in u.row))
+      if (cs.length) sql(`update public."${u.t}" x set ${cs.map((c) => `${c} = r.${c}`).join(', ')} from json_populate_record(null::public."${u.t}", ${lit(u.row)}) r where ${u.where}`)
+    }
+    // ลบแบบรอบ ๆ: ตารางลูกก่อนตารางแม่ (ลบไม่ได้เพราะ foreign key ก็ลองใหม่รอบหน้า)
+    let left = del
+    for (let pass = 0; pass < 5 && left.length; pass++) {
+      left = left.filter((d) => !sql(`delete from public."${d.t}" where ${d.where}`).ok)
+    }
   } catch {}
 }
-
+export const queueMark = dbMark, queueSweep = dbSweep // ชื่อเดิม (fix รอบ 1) — เรียกตัวใหม่
 export const dbUp = () => scalar('select 1') === '1'
 
 // CSV แบบง่าย (ไม่มี quote) ของร้าน → [{หัว: ค่า}]

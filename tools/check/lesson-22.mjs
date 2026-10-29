@@ -52,7 +52,14 @@ const hasTable = (t) => scalar(`select to_regclass('public.${t}') is not null`) 
 let bills = []
 async function seed(staff) {
   bills = []
-  for (const b of POS) { const r = await rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: b.lines, p_at: b.at, p_customer_phone: PHONE }, staff.token); if (!r.ok) throw new Error(`pos_record_bill ล้ม (${r.status}): ${r.text.slice(0, 160)}`); bills.push(r.body.id) }
+  // เซิร์ฟเวอร์ที่ถูกต้องไม่เชื่อ p_at จาก client (บท 21) → บันทึกบิลโดยไม่ส่ง p_at แล้วย้ายวันเวลาของบิลตัวอย่างด้วย SQL ตรง ๆ (ตัวตรวจเป็นผู้ดูแลฐานข้อมูล)
+  // ผู้เรียนไม่ต้องผ่อนกฎความปลอดภัยของ pos_record_bill (เช่น ยอมรับ p_at ย้อนหลังหลายร้อยวัน) เพื่อให้ตัวตรวจนี้ผ่าน
+  for (const b of POS) {
+    const r = await rpc('pos_record_bill', { p_client_order_id: crypto.randomUUID(), p_lines: b.lines, p_customer_phone: PHONE }, staff.token)
+    if (!r.ok) throw new Error(`pos_record_bill ล้ม (${r.status}): ${r.text.slice(0, 160)}`)
+    const u = sql(`update pos_bills set at='${b.at}' where id='${r.body.id}'`); if (!u.ok) throw new Error(`ย้ายวันเวลาบิลตัวอย่างไม่ได้: ${u.out.slice(0, 160)}`)
+    bills.push(r.body.id)
+  }
   const lat = "(select id from menu_items where name='ลาเต้')"
   PRE.forEach(([at, st, total, cups], i) => { sql(`insert into orders(code,customer_name,phone,pickup_at,status,total,created_at) values ('SC-T22-${i}','ทดสอบ','${PHONE}','${at}','${st}',${total},'${at}')`); sql(`insert into order_items(order_id,menu_item_id,qty,unit_price,cups) select id,${lat},${cups},${Math.round(total / Math.max(cups, 1))},${cups} from orders where code='SC-T22-${i}'`) })
   SHOP.forEach(([at, st, total], i) => sql(`insert into shop_orders(code,user_id,status,total,ship_name,ship_phone,ship_address,created_at) values ('SH-T22-${i}','${staff.id}','${st}',${total},'ทดสอบ','${PHONE}','ที่อยู่สมมติ','${at}')`))

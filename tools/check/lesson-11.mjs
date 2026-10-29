@@ -42,7 +42,12 @@ export const checks = [
         const open = cnt('menu_items') >= 12 && cnt('options') === 12 && cnt('settings') >= 10 && cnt('ingredients') === 0
         return { ok: seed.ok && bad.length === 0 && grants.length === 0 && w.length === 0 && open,
           hint: `anon ยังอ่านได้: ${bad.join(', ') || '-'} · สิทธิ์ SELECT ที่ยังเหลือ: ${[...new Set(grants)].join(', ') || '-'} · เขียนได้: ${w.length} · เมนู/ตัวเลือก/settings ยังเปิด และ ingredients ปิด: ${open}${seed.ok ? '' : ' · สั่งทดสอบไม่ได้ (place_preorder ใช้ไม่ได้)'}` }
-      } finally { sql("delete from orders where phone='0900000556'") }
+      } finally {
+        // ลบออเดอร์ทดลอง และจำนวนแก้วในช่องที่มันจอง (pickup_slots) ด้วย — ไม่งั้น test:db ในบทหลัง ๆ เห็นช่อง 16:20 ของพรุ่งนี้มีแก้วค้าง
+        const slots = (rows("select distinct pickup_at from orders where phone='0900000556'") ?? []).map((r) => r[0])
+        sql("delete from orders where phone='0900000556'")
+        for (const t of slots) sql(`delete from pickup_slots where slot_start='${t}' and not exists (select 1 from orders where pickup_at='${t}')`)
+      }
     },
   },
   {
