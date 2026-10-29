@@ -204,7 +204,9 @@ export const checks = [
       const code = walk('supabase/functions').filter((p) => /\.ts$/.test(p) && !/\.test\.ts$/.test(p)).map(read).join('\n')
       const hard = code.match(/sk_(test|live)_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}/g)
       const t = run('npm', ['test', '--silent'])
-      return { ok: tests.length >= 2 && t.ok && !hard, hint: `ไฟล์ test ${tests.length} (ต้อง ≥ 2) · npm test=${t.ok} · key ที่พิมพ์ในโค้ด: ${hard?.join(', ') ?? '-'}` }
+      // test ที่ต่อฐานข้อมูลจริงหลายไฟล์ (create_payment, payment_webhook, line_webhook …) ใช้สต็อก/คิวชุดเดียวกัน: ถ้า node --test รันหลายไฟล์พร้อมกัน จะผ่านบ้างตกบ้าง (out_of_stock) จึงต้องรันทีละไฟล์
+      const serial = /--test-concurrency[= ]1\b/.test(JSON.parse(read('package.json') || '{}').scripts?.test ?? '')
+      return { ok: tests.length >= 2 && t.ok && !hard && serial, hint: `ไฟล์ test ${tests.length} (ต้อง ≥ 2) · npm test=${t.ok} · key ที่พิมพ์ในโค้ด: ${hard?.join(', ') ?? '-'}${serial ? '' : ' · สคริปต์ test ใน package.json ต้องรันทีละไฟล์ (เติม --test-concurrency=1 หลัง --test) เพราะ test ที่ต่อฐานข้อมูลจริงหลายไฟล์ใช้สต็อกเดียวกัน รันพร้อมกันแล้วผ่านบ้างตกบ้าง'}` }
     },
   },
   {
