@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, statSync, createReadStream, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { extname, join } from 'node:path'
-import { exists, read, run, walk, root } from './lib.mjs'
+import { exists, read, run, walk, root, lines } from './lib.mjs'
 import { rows, scalar, sql, dbUp } from './db.mjs'
 import { api, env, rpc, newUser, delUser } from './api.mjs'
 import { ref, catalog } from './lesson-20.mjs'
@@ -80,6 +80,9 @@ const serve = (dir) => new Promise((res) => { const s = createServer((q, a) => {
 const buildOwner = () => { const E = env(); return spawnSync('npm', ['run', 'build', '--silent'], { cwd: join(root, 'owner'), encoding: 'utf8', timeout: 170000, env: { ...process.env, VITE_SUPABASE_URL: E.SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY: E.SUPABASE_PUBLISHABLE_KEY } }) }
 const pngSize = (f) => { const b = readFileSync(f); return b.readUInt32BE(0) === 0x89504e47 ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null }
 const n = (t) => Number(String(t).replace(/[^\d.-]/g, ''))
+
+const nonEmpty = (p) => lines(p).filter((l) => l.trim()).length
+export const partNames = { compare: 'เทียบกับ prompt แรก' }
 
 export const checks = [
   {
@@ -248,5 +251,9 @@ export const checks = [
         } finally { await browser.close(); srv.close() }
       })
     },
+  },
+  {
+    part: 'compare', name: 'มีใบเทียบ docs/เทียบ-22.md ที่บอกว่า prompt แรก (สั่งสั้น ๆ ก่อนมี brief) ทำให้ Claude ต้อง "เดา" อะไร และ brief เพิ่มอะไร',
+    run: () => ({ ok: nonEmpty('docs/เทียบ-22.md') >= 5 && /เดา/.test(read('docs/เทียบ-22.md')), hint: 'ใบเทียบต้องมีอย่างน้อย 5 บรรทัดและใช้คำว่า "เดา" บอกว่ารอบแรก Claude ต้องเดาอะไร และ brief ที่ร้านส่งมาเพิ่มอะไร' }),
   },
 ]

@@ -3,6 +3,9 @@ import { exists, read, menuItems, lines } from './lib.mjs'
 const html = () => read('menu.html')
 const text = () => html().replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
 
+const nonEmpty = (p) => lines(p).filter((l) => l.trim()).length
+export const partNames = { break: 'เทียบกับ prompt แรก' }
+
 export const checks = [
   { part: 'win', name: 'มีไฟล์ menu.html', run: () => ({ ok: exists('menu.html'), hint: 'ยังไม่มี menu.html ในโฟลเดอร์' }) },
   {
@@ -47,5 +50,9 @@ export const checks = [
       const n = lines('CLAUDE.md').filter((l) => l.trim()).length
       return { ok: n >= 3 && n <= 25 && /menu\.txt/.test(read('CLAUDE.md')), hint: 'CLAUDE.md ต้องมี 3–25 บรรทัดและพูดถึง menu.txt' }
     },
+  },
+  {
+    part: 'break', name: 'มีใบเทียบ docs/เทียบ-01.md ที่บอกว่า prompt แรก (ไม่มี brief) ทำให้ Claude ต้อง "เดา" อะไร และ brief เพิ่มอะไร',
+    run: () => ({ ok: nonEmpty('docs/เทียบ-01.md') >= 5 && /เดา/.test(read('docs/เทียบ-01.md')), hint: 'ใบเทียบต้องมีอย่างน้อย 5 บรรทัดและใช้คำว่า "เดา" บอกว่ารอบแรก Claude ต้องเดาอะไร และ brief ที่ร้านส่งมาเพิ่มอะไร' }),
   },
 ]

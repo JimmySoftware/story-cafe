@@ -6,7 +6,8 @@ const srcFiles = () => walk('web/src').filter((p) => /\.(tsx?|css)$/.test(p) && 
 const srcText = () => srcFiles().map(read).join('\n')
 const mtime = (p) => (exists(p) ? statSync(p).mtimeMs : 0)
 
-export const partNames = { break: 'ตรวจ plugin ก่อนไว้ใจ' }
+const nonEmpty = (p) => lines(p).filter((l) => l.trim()).length
+export const partNames = { break: 'ตรวจ plugin ก่อนไว้ใจ', extra: 'เทียบกับ prompt แรก' }
 
 export const checks = [
   { part: 'win', name: 'หน้าแรกถูกเขียนใหม่แล้ว (web/src/App.tsx ไม่ใช่หน้าชั่วคราว)', run: () => ({ ok: lines('web/src/App.tsx').length >= 25 && !/กำลังสร้างหน้าร้าน/.test(app()), hint: 'App.tsx ยังเป็นหน้าชั่วคราว' }) },
@@ -63,5 +64,9 @@ export const checks = [
       const t = read('docs/plugin-review.md')
       return { ok: lines('docs/plugin-review.md').filter((l) => l.trim()).length >= 8 && /frontend-design/.test(t) && /hook/i.test(t) && /MCP/i.test(t) && /(ปลอดภัย|ไม่พบ|พบ)/.test(t), hint: 'รายงานต้องยาวอย่างน้อย 8 บรรทัด พูดถึง frontend-design, hooks, MCP และสรุปผลตรวจ' }
     },
+  },
+  {
+    part: 'extra', name: 'มีใบเทียบ docs/เทียบ-07.md ที่บอกว่า prompt แรก (สั่งสั้น ๆ ก่อนมี brief) ทำให้ Claude ต้อง "เดา" อะไร และ brief เพิ่มอะไร',
+    run: () => ({ ok: nonEmpty('docs/เทียบ-07.md') >= 5 && /เดา/.test(read('docs/เทียบ-07.md')), hint: 'ใบเทียบต้องมีอย่างน้อย 5 บรรทัดและใช้คำว่า "เดา" บอกว่ารอบแรก Claude ต้องเดาอะไร และ brief ที่ร้านส่งมาเพิ่มอะไร' }),
   },
 ]
